@@ -11,3 +11,4 @@ include!("tests_parts/native_g.rs");
 include!("tests_parts/native_h.rs");
 include!("tests_parts/ninegag.rs");
 include!("tests_parts/myvidster.rs");
+include!("tests_parts/glide.rs");
