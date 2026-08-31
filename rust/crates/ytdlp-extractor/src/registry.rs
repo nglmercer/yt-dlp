@@ -85,6 +85,8 @@ impl ExtractorRegistry {
                 registry.register(SkylineWebcamsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "WebcameraplIE" {
                 registry.register(WebcameraplExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "AngelIE" {
+                registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {
