@@ -177,6 +177,8 @@ impl ExtractorRegistry {
                 registry.register(MyVidsterExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GlideIE" {
                 registry.register(GlideExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EbayIE" {
+                registry.register(EbayExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
                 registry.register(EbaumsWorldExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FuyinTVIE" {

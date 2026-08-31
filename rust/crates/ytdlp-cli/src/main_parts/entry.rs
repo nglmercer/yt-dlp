@@ -138,6 +138,8 @@ mod native_tests {
             .as_deref()
             .is_some_and(|error| error.contains("Adobe HDS/F4M")));
 
+        assert!(native_hls_protocol("m3u8_native"));
+        assert!(native_dash_protocol("http_dash_segments"));
         assert!(
             native_protocol_todo("https://media.test/video.mp4", Some("mp4"), None).is_none()
         );

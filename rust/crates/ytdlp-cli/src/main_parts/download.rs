@@ -233,6 +233,12 @@ fn native_download_info(
     let result = match declared_ext {
         Some("m3u8") => downloader.download_hls(&request, Some(&output), &download_options),
         Some("mpd") => downloader.download_dash(&request, Some(&output), &download_options),
+        _ if declared_protocol.is_some_and(native_hls_protocol) => {
+            downloader.download_hls(&request, Some(&output), &download_options)
+        }
+        _ if declared_protocol.is_some_and(native_dash_protocol) => {
+            downloader.download_dash(&request, Some(&output), &download_options)
+        }
         _ if native_url_ends_with(&download_url, ".m3u8") => {
             downloader.download_hls(&request, Some(&output), &download_options)
         }
@@ -351,4 +357,15 @@ fn native_url_ends_with(url: &str, suffix: &str) -> bool {
         .next()
         .map(|url| url.to_ascii_lowercase().ends_with(suffix))
         .unwrap_or(false)
+}
+
+fn native_hls_protocol(protocol: &str) -> bool {
+    matches!(protocol.to_ascii_lowercase().as_str(), "hls" | "m3u8" | "m3u8_native")
+}
+
+fn native_dash_protocol(protocol: &str) -> bool {
+    matches!(
+        protocol.to_ascii_lowercase().as_str(),
+        "dash" | "mpd" | "http_dash_segments"
+    )
 }
