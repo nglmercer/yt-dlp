@@ -1,0 +1,27 @@
+[
+  {
+    "kind": "hls",
+    "base_url": "https://media.example.test/video/playlist.m3u8",
+    "body": "#EXTM3U\n#EXT-X-MAP:URI=\"init.mp4\"\n#EXT-X-KEY:METHOD=NONE\n#EXTINF:1,\npart-01.m4s\n#EXTINF:1,\npart-02.m4s\n"
+  },
+  {
+    "kind": "hls",
+    "base_url": "https://media.example.test/master.m3u8",
+    "body": "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=100000\nvariants/low.m3u8\n"
+  },
+  {
+    "kind": "dash",
+    "base_url": "https://media.example.test/manifests/main.mpd",
+    "body": "<MPD><Period><AdaptationSet><Representation><BaseURL>video/</BaseURL><SegmentList><Initialization sourceURL=\"init.mp4\"/><SegmentURL media=\"one.m4s\"/><SegmentURL media=\"two.m4s\"/></SegmentList></Representation></AdaptationSet></Period></MPD>"
+  },
+  {
+    "kind": "dash",
+    "base_url": "https://media.example.test/main.mpd",
+    "body": "<MPD><Period><Representation id=\"v1\"><BaseURL>video/</BaseURL><SegmentTemplate timescale=\"1\" media=\"seg-$Number%02d$.m4s\" initialization=\"init.mp4\"><SegmentTimeline><S t=\"0\" d=\"2\" r=\"1\"/></SegmentTimeline></SegmentTemplate></Representation></Period></MPD>"
+  },
+  {
+    "kind": "dash",
+    "base_url": "https://media.example.test/main.mpd",
+    "body": "<MPD mediaPresentationDuration=\"PT5S\"><Period><Representation><SegmentTemplate duration=\"2\" media=\"seg-$Number$.m4s\"/></Representation></Period></MPD>"
+  }
+]

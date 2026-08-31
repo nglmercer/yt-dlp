@@ -7,7 +7,9 @@ use std::path::PathBuf;
 use cli::{ParseResult, parse_args, parse_configured_args, rust_supported_option_aliases};
 use yt_dlp_core::{INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
 use yt_dlp_core::{format_bytes, render_output_template};
-use yt_dlp_downloader::{DirectDownloader, DownloadOptions, DownloadResult};
+use yt_dlp_downloader::{
+    DirectDownloader, DownloadOptions, DownloadResult, parse_dash_mpd, parse_hls_playlist,
+};
 use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry, ExtractorResult};
 use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
@@ -319,6 +321,40 @@ fn extractor_inventory() -> Result<serde_json::Value, String> {
     }))
 }
 
+fn downloader_manifests(input: serde_json::Value) -> Result<serde_json::Value, String> {
+    let object = input
+        .as_object()
+        .ok_or_else(|| "downloader_manifests input must be an object".to_owned())?;
+    let kind = object
+        .get("kind")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "downloader_manifests input requires kind".to_owned())?;
+    let base_url = object
+        .get("base_url")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "downloader_manifests input requires base_url".to_owned())?;
+    let body = object
+        .get("body")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "downloader_manifests input requires body".to_owned())?;
+    match kind {
+        "hls" => {
+            let playlist =
+                parse_hls_playlist(base_url, body.as_bytes()).map_err(|error| error.to_string())?;
+            Ok(serde_json::json!({
+                "variant": playlist.variant,
+                "segments": playlist.segments,
+            }))
+        }
+        "dash" => {
+            let manifest =
+                parse_dash_mpd(base_url, body.as_bytes()).map_err(|error| error.to_string())?;
+            Ok(serde_json::json!({"segments": manifest.segments}))
+        }
+        _ => Err(format!("unsupported downloader manifest kind: {kind}")),
+    }
+}
+
 fn parity_response(request: ParityRequest) -> ParityResponse {
     let result: Result<Option<serde_json::Value>, String> =
         match request.operation.as_str() {
@@ -347,6 +383,7 @@ fn parity_response(request: ParityRequest) -> ParityResponse {
             "core_utils" => core_utils(request.input).map(Some),
             "cli_inventory" => cli_inventory().map(Some),
             "extractor_inventory" => extractor_inventory().map(Some),
+            "downloader_manifests" => downloader_manifests(request.input).map(Some),
             operation => Err(format!("unsupported operation: {operation}")),
         };
 
@@ -821,51 +858,96 @@ fn native_playlist_indices(spec: Option<&str>, length: usize) -> Result<Vec<usiz
         return Ok((0..length).collect());
     };
     let mut indices = Vec::new();
-    for token in spec
-        .split(',')
-        .map(str::trim)
-        .filter(|token| !token.is_empty())
-    {
-        if token == "-1" {
-            indices.push(length - 1);
-            continue;
+    for token in spec.split(',').map(str::trim) {
+        if token.is_empty() {
+            return Err("--playlist-items cannot contain an empty segment".to_owned());
         }
-        if let Some((start, end)) = token.split_once('-') {
-            let start = if start.is_empty() {
-                1
+        let range = token.find(':').or_else(|| {
+            token
+                .as_bytes()
+                .iter()
+                .enumerate()
+                .skip(1)
+                .find_map(|(position, value)| (*value == b'-').then_some(position))
+        });
+        let Some(separator) = range else {
+            let value = token
+                .parse::<i64>()
+                .map_err(|error| format!("invalid --playlist-items value {token:?}: {error}"))?;
+            let index = if value >= 0 {
+                value - 1
             } else {
-                start
-                    .parse::<usize>()
-                    .map_err(|error| format!("invalid --playlist-items range {token:?}: {error}"))?
+                length as i64 + value
             };
-            let end = if end.is_empty() {
-                length
-            } else {
-                end.parse::<usize>()
-                    .map_err(|error| format!("invalid --playlist-items range {token:?}: {error}"))?
-            };
-            if start == 0 || end == 0 || start > end {
-                return Err(format!("invalid --playlist-items range: {token}"));
-            }
-            for index in start..=end {
-                if index <= length {
-                    indices.push(index - 1);
-                }
+            if (0..length as i64).contains(&index) {
+                indices.push(index as usize);
             }
             continue;
+        };
+
+        let (start_text, remainder) = token.split_at(separator);
+        let remainder = &remainder[1..];
+        let (end_text, step_text) = remainder.split_once(':').unwrap_or((remainder, ""));
+        let start =
+            if start_text.is_empty() {
+                None
+            } else {
+                Some(start_text.parse::<i64>().map_err(|error| {
+                    format!("invalid --playlist-items range {token:?}: {error}")
+                })?)
+            };
+        let end =
+            if end_text.is_empty()
+                || end_text.eq_ignore_ascii_case("inf")
+                || end_text.eq_ignore_ascii_case("infinite")
+            {
+                None
+            } else {
+                Some(end_text.parse::<i64>().map_err(|error| {
+                    format!("invalid --playlist-items range {token:?}: {error}")
+                })?)
+            };
+        let step = if step_text.is_empty() {
+            1
+        } else {
+            step_text
+                .parse::<i64>()
+                .map_err(|error| format!("invalid --playlist-items step {token:?}: {error}"))?
+        };
+        if step == 0 {
+            return Err(format!(
+                "step in --playlist-items segment {token:?} cannot be zero"
+            ));
         }
-        let index = token
-            .parse::<usize>()
-            .map_err(|error| format!("invalid --playlist-items value {token:?}: {error}"))?;
-        if index == 0 {
-            return Err("--playlist-items uses one-based positive indexes".to_owned());
-        }
-        if index <= length {
-            indices.push(index - 1);
+
+        let start_index = match start {
+            Some(value) if value >= 0 => value - 1,
+            Some(value) => length as i64 + value,
+            None if step > 0 => 0,
+            None => length as i64 - 1,
+        };
+        let stop_index = match end {
+            Some(value) if value >= 0 => value - 1,
+            Some(value) => length as i64 + value,
+            None if step > 0 => length as i64,
+            None => -1,
+        } + if step > 0 { 1 } else { -1 };
+
+        let mut index = start_index;
+        while if step > 0 {
+            index < stop_index
+        } else {
+            index > stop_index
+        } {
+            if (0..length as i64).contains(&index) {
+                indices.push(index as usize);
+            }
+            index = match index.checked_add(step) {
+                Some(index) => index,
+                None => break,
+            };
         }
     }
-    indices.sort_unstable();
-    indices.dedup();
     Ok(indices)
 }
 
@@ -890,6 +972,18 @@ fn native_download_one(
     registry: &ExtractorRegistry,
     extraction_context: &ExtractionContext,
 ) -> Result<(), String> {
+    native_download_one_with_redirect_depth(options, registry, extraction_context, 0)
+}
+
+fn native_download_one_with_redirect_depth(
+    options: &cli::CliOptions,
+    registry: &ExtractorRegistry,
+    extraction_context: &ExtractionContext,
+    redirect_depth: usize,
+) -> Result<(), String> {
+    if redirect_depth >= 20 {
+        return Err("TODO: native extractor redirect chain exceeded 20 levels".to_owned());
+    }
     let url = options
         .urls
         .first()
@@ -902,6 +996,16 @@ fn native_download_one(
         .map_err(|error| error.to_string())?;
     match extraction {
         ExtractorResult::Single(info) => native_download_info(options, &info, extraction_context),
+        ExtractorResult::Redirect { url, .. } => {
+            let mut redirected = options.clone();
+            redirected.urls = vec![url];
+            native_download_one_with_redirect_depth(
+                &redirected,
+                registry,
+                extraction_context,
+                redirect_depth + 1,
+            )
+        }
         ExtractorResult::Playlist { info, entries } => {
             native_download_playlist(options, info, entries, extraction_context)
         }
@@ -1334,7 +1438,20 @@ mod native_tests {
             native_playlist_indices(Some("1,3-4,-1"), 5).unwrap(),
             vec![0, 2, 3, 4]
         );
-        assert!(native_playlist_indices(Some("0"), 5).is_err());
-        assert!(native_playlist_indices(Some("4-2"), 5).is_err());
+        assert_eq!(
+            native_playlist_indices(Some("3,1,1,-2:-1"), 5).unwrap(),
+            vec![2, 0, 0, 3, 4]
+        );
+        assert_eq!(
+            native_playlist_indices(Some("5:1:-2"), 5).unwrap(),
+            vec![4, 2, 0]
+        );
+        assert_eq!(
+            native_playlist_indices(Some(":3"), 5).unwrap(),
+            vec![0, 1, 2]
+        );
+        assert!(native_playlist_indices(Some("0"), 5).unwrap().is_empty());
+        assert!(native_playlist_indices(Some("4-2"), 5).unwrap().is_empty());
+        assert!(native_playlist_indices(Some("1:3:0"), 5).is_err());
     }
 }

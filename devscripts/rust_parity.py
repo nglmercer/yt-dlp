@@ -13,6 +13,10 @@ import io
 import json
 import subprocess
 import sys
+import math
+import re
+import urllib.parse
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +75,135 @@ def run_rust(binary: Path, operation: str, values: list[object]) -> list[dict[st
     return responses
 
 
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit('}', 1)[-1].rsplit(':', 1)[-1]
+
+
+def _dash_replace(template: str, number: int, time: int, representation_id: str) -> str:
+    template = template.replace('$RepresentationID$', representation_id)
+    template = template.replace('$Number$', str(number)).replace('$Time$', str(time))
+    template = re.sub(
+        r'\$Number%0(\d+)d\$',
+        lambda match: f'{number:0{int(match.group(1))}d}',
+        template,
+    )
+    return template
+
+
+def _reference_dash_segments(base_url: str, body: str) -> list[str]:
+    root = ET.fromstring(body)
+    mpd_duration = root.attrib.get('mediaPresentationDuration')
+    duration_match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', mpd_duration or '')
+    presentation_duration = 0
+    if duration_match:
+        hours, minutes, seconds = (float(value or 0) for value in duration_match.groups())
+        presentation_duration = hours * 3600 + minutes * 60 + seconds
+
+    segments: list[str] = []
+
+    def walk(element: ET.Element, current_base: str, representation_id: str = '') -> None:
+        local = _xml_local_name(element.tag)
+        if local == 'Representation':
+            representation_id = element.attrib.get('id', representation_id)
+        if local == 'Initialization' and element.attrib.get('sourceURL'):
+            segments.insert(0, urllib.parse.urljoin(current_base, element.attrib['sourceURL']))
+        if local == 'SegmentURL' and element.attrib.get('media'):
+            segments.append(urllib.parse.urljoin(current_base, element.attrib['media']))
+        if local == 'SegmentTemplate':
+            media = element.attrib.get('media')
+            if not media:
+                return
+            initialization = element.attrib.get('initialization')
+            timescale = int(element.attrib.get('timescale', '1'))
+            start_number = int(element.attrib.get('startNumber', '1'))
+            if initialization:
+                segments.append(urllib.parse.urljoin(
+                    current_base,
+                    _dash_replace(initialization, start_number, 0, representation_id),
+                ))
+            timeline = [
+                child for child in element.iter()
+                if _xml_local_name(child.tag) == 'S'
+            ]
+            number = start_number
+            current_time = 0
+            if timeline:
+                for index, entry in enumerate(timeline):
+                    if entry.attrib.get('t') is not None:
+                        current_time = int(entry.attrib['t'])
+                    entry_duration = int(entry.attrib['d'])
+                    repeat = int(entry.attrib.get('r', '0'))
+                    if repeat < 0:
+                        next_time = None
+                        for candidate in timeline[index + 1:]:
+                            if candidate.attrib.get('t') is not None:
+                                next_time = int(candidate.attrib['t'])
+                                break
+                        end_time = next_time
+                        if end_time is None and presentation_duration:
+                            end_time = int(presentation_duration * timescale)
+                        repeat = max(0, ((end_time or (current_time + entry_duration)) - current_time) // entry_duration - 1)
+                    for _ in range(repeat + 1):
+                        segments.append(urllib.parse.urljoin(
+                            current_base,
+                            _dash_replace(media, number, current_time, representation_id),
+                        ))
+                        number += 1
+                        current_time += entry_duration
+            elif element.attrib.get('duration') and presentation_duration:
+                entry_duration = int(element.attrib['duration'])
+                count = math.ceil(presentation_duration * timescale / entry_duration)
+                for index in range(count):
+                    segments.append(urllib.parse.urljoin(
+                        current_base,
+                        _dash_replace(media, start_number + index, index * entry_duration, representation_id),
+                    ))
+            return
+        child_base = current_base
+        for child in element:
+            if _xml_local_name(child.tag) == 'BaseURL' and (child.text or '').strip():
+                child_base = urllib.parse.urljoin(child_base, (child.text or '').strip())
+        for child in element:
+            if _xml_local_name(child.tag) == 'BaseURL':
+                continue
+            walk(child, child_base, representation_id)
+
+    walk(root, base_url)
+    return segments
+
+
+def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
+    base_url = str(case['base_url'])
+    body = str(case['body'])
+    if case['kind'] == 'hls':
+        lines = [line.strip() for line in body.splitlines() if line.strip()]
+        if '#EXTM3U' not in lines:
+            raise ValueError('fixture HLS playlist is missing #EXTM3U')
+        variant = None
+        variant_pending = False
+        segments = []
+        for line in lines:
+            if line.startswith('#EXT-X-STREAM-INF:'):
+                variant_pending = True
+            elif line.startswith('#EXT-X-MAP:'):
+                match = re.search(r'URI="([^"]+)"', line)
+                if match:
+                    segments.append(urllib.parse.urljoin(base_url, match.group(1)))
+            elif line.startswith('#'):
+                continue
+            else:
+                target = urllib.parse.urljoin(base_url, line)
+                if variant_pending and variant is None:
+                    variant = target
+                    variant_pending = False
+                elif not variant_pending:
+                    segments.append(target)
+        return {'variant': variant, 'segments': segments}
+    if case['kind'] == 'dash':
+        return {'segments': _reference_dash_segments(base_url, body)}
+    raise ValueError(f'unknown downloader fixture kind: {case["kind"]}')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rust-bin', type=Path, default=DEFAULT_RUST_BINARY)
@@ -78,7 +211,8 @@ def main() -> int:
         '--operation',
         choices=(
             'format_bytes', 'parse_bytes', 'parse_duration', 'request_model',
-            'cli_options', 'cli_inventory', 'extractor_inventory', 'core_utils'),
+            'cli_options', 'cli_inventory', 'extractor_inventory', 'core_utils',
+            'downloader_manifests'),
         default='format_bytes')
     parser.add_argument('--fixture', type=Path)
     args = parser.parse_args()
@@ -179,6 +313,8 @@ def main() -> int:
             else:
                 raise ValueError(f'unknown core utility: {function}')
             expected.append(result)
+    elif args.operation == 'downloader_manifests':
+        expected = [downloader_manifest_reference(case) for case in values]
     else:
         expected = []
         for case in values:

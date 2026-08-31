@@ -1,6 +1,6 @@
 # Python to Rust migration plan
 
-Status: Phase 0 started. The Python tree remains available only as an offline
+Status: Phases 0–6 in progress. The Python tree remains available only as an offline
 behavioral reference while the executable is migrated. The Rust workspace is
 the only product runtime; unsupported surfaces fail explicitly as TODO.
 
@@ -33,13 +33,13 @@ rust/
   crates/
     ytdlp-core/       data model, errors, shared semantics
     ytdlp-cli/        experimental command-line entry point
-    extractor/        registry, base extractor, ported extractors
-    networking/       requests, handlers, cookies, proxies
-    downloader/       protocols, fragments, resume, live streams
-    postprocessor/    FFmpeg and metadata integrations
-    javascript/       runtime and EJS interfaces
-    plugins/          native plugin ABI
-    validation/       offline differential runner and fixtures
+    ytdlp-extractor/     registry, base extractor, ported extractors
+    ytdlp-networking/   requests, handlers, cookies, proxies
+    ytdlp-downloader/   protocols, fragments, resume, live streams
+    ytdlp-postprocessor/ FFmpeg and metadata integrations
+    ytdlp-javascript/   runtime and EJS interfaces
+    ytdlp-plugins/      native plugin ABI
+    ytdlp-validation/   offline differential runner and fixtures
 ```
 
 ## Stages
@@ -139,6 +139,7 @@ self-update behavior.
 - [x] explicit config-file precedence overlaid by command-line options
 - [x] generated ordered inventory for all 1,752 Python extractor registrations
 - [x] source-compatible extractor regex compilation with coverage diagnostics
+- [x] modular extractor crate split into shared contracts, native implementations, registry, and tests
 - [x] CLI network-option adapter into the native request director
 - [x] opt-in extractor selection diagnostics (`--extractor-info`)
 - [x] native direct-resource downloader with atomic output commits
@@ -152,6 +153,8 @@ self-update behavior.
 - [x] native Coub API media-version extractor
 - [x] native Freesound HTML/Open Graph audio extractor
 - [x] native Yandex Disk store/public-media extractor
+- [x] native Rumble embed API/live/caption extractor
+- [x] native Rumble canonical-page wrapper and page-level metadata merge
 - [x] native Vocaroo HEAD-checked direct-audio extractor
 - [x] native Google Drive playback-transcode extractor
 - [x] native Clyp JSON API extractor with audio format records
@@ -184,6 +187,67 @@ self-update behavior.
 - [x] native `--write-info-json` output beside the selected media path
 - [x] native multi-URL execution and `--batch-file` input for the download loop
 - [x] native playlist selection for single-entry output, -j, -J, and ranges
+- [x] native Streamable AJAX extractor with multi-format metadata
+- [x] native Newgrounds media, collection, search, and user listing extractors
+- [x] native Wistia media, playlist, and API-backed channel extractors
+- [x] native VidLii page/source extractor with HEAD validation
+- [x] native href.li redirect result and Rust redirect-chain execution
+- [x] Rust/Python differential fixtures for HLS and DASH manifest expansion
+- [x] native PeerTube v1 video API extractor across generated instances
+- [x] native PeerTube account/channel/playlist pagination and entry expansion
+- [x] native Rumble channel/user pagination and entry expansion
+- [x] native Slideshare embedded-JSON video extractor
+- [x] native Soundgasm audio and profile playlist extractors
+- [x] native Imgur animated media and gallery/album extractors
+- [x] native EbaumsWorld XML player extractor
+- [x] native Fuyin TV JSON API extractor
+- [x] native CAM4 live HLS extractor
+- [x] native Kommunetv stream API/HLS extractor
+- [x] native Stream.cz GraphQL/playlist extractor with subtitles
+- [x] native Vidyard player JSON extractor with HLS, captions, and chapters
+- [x] native Ku6 page/API extractor
+- [x] native Graspop festival API/HLS extractor
+- [x] native ScreenRec page/HLS extractor
+- [x] native MatchTV live-channel extractor
+- [x] native JWPlatform JSON/media/playlist extractor with captions
+- [x] native Bundesliga, OutsideTV, and TeachingChannel JWPlatform wrappers
+- [x] native AtScale conference event playlist extractor
+- [x] native NZZ embedded-JWPlayer playlist extractor
+- [x] native BehindKink HTML5 video extractor
+- [x] native HistoricFilms direct archive-media extractor
+- [x] native OnePlace podcast episode extractor
+- [x] native Megaphone embedded podcast extractor
+- [x] native Hypem track/source extractor
+- [x] native QingTing program extractor
+- [x] native Skyline Webcams live HLS extractor
+- [x] native Webcamera.pl ROT13/HLS extractor
+- [x] native Alibaba embedded product-video extractor
+- [x] native Moving Image archive HLS extractor
+- [x] native Tweakers progressive-video API extractor
+- [x] native KrasView player-JSON extractor
+- [x] native 56.com video API extractor
+- [x] native TASS embedded-source extractor
+- [x] native Photobucket metadata/file extractor
+- [x] native Nobel Prize JSON-LD media extractor
+- [x] native Caltrans traffic-camera live HLS extractor
+- [x] native CozyTV replay extractor
+- [x] native Livestreamfails API/direct-media extractor
+- [x] native Masters tournament HLS extractor
+- [x] native Mir24 article/player HLS extractor
+- [x] native Blogger video-config extractor
+- [x] native radio.de station extractor
+- [x] native RadioZET podcast API extractor
+- [x] native WorldStarHipHop HTML5 media extractor
+- [x] native This American Life archive/audio extractor
+- [x] native Academic Earth course playlist extractor
+- [x] native Premiership Rugby article/HLS extractor
+- [x] native MatchiTV Next.js/HLS extractor
+- [x] native SZTV.hu VOD extractor
+- [x] native APA direct-player and JWPlatform redirect extractor
+- [x] native Arnes Video public-media API extractor
+- [x] native CJSW episode audio extractor
+- [x] native Daystar Lightcast configuration/HLS extractor
+- [x] native DCTP versioned REST/API extractor
 
 Next: add native downloader differential fixtures, expand the base
 extractor/result contracts, port the remaining FFmpeg operations and option

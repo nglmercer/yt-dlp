@@ -102,6 +102,7 @@ rust-parity: rust-test
 	$(PYTHON) devscripts/rust_parity.py --operation parse_bytes
 	$(PYTHON) devscripts/rust_parity.py --operation parse_duration
 	$(PYTHON) devscripts/rust_parity.py --operation core_utils
+	$(PYTHON) devscripts/rust_parity.py --operation downloader_manifests
 	$(PYTHON) devscripts/rust_parity.py --operation request_model
 	$(PYTHON) devscripts/rust_parity.py --operation cli_options
 	$(PYTHON) devscripts/rust_parity.py --operation cli_inventory
