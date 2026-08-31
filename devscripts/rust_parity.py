@@ -27,6 +27,7 @@ from yt_dlp.utils import (  # noqa: E402
     float_or_none,
     format_bytes,
     int_or_none,
+    parse_iso8601,
     parse_bytes,
     parse_duration,
     str_or_none,
@@ -173,6 +174,8 @@ def main() -> int:
                 )
             elif function == 'str_or_none':
                 result = str_or_none(case.get('value'), case.get('default'))
+            elif function == 'parse_iso8601':
+                result = parse_iso8601(case.get('value'))
             else:
                 raise ValueError(f'unknown core utility: {function}')
             expected.append(result)
@@ -219,6 +222,12 @@ def main() -> int:
                 'noplaylist': opts.noplaylist,
                 'dumpjson': opts.dumpjson,
                 'dump_single_json': opts.dump_single_json,
+                'geturl': opts.geturl,
+                'gettitle': opts.gettitle,
+                'getid': opts.getid,
+                'getthumbnail': opts.getthumbnail,
+                'getduration': opts.getduration,
+                'writeinfojson': opts.writeinfojson,
                 'listformats': opts.listformats,
                 'batchfile': opts.batchfile,
                 'playlist_items': opts.playlist_items,

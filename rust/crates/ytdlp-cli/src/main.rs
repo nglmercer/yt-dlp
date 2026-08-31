@@ -1,14 +1,14 @@
 mod cli;
 
 use std::env;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, Read, Write};
 use std::path::PathBuf;
 
 use cli::{ParseResult, parse_args, parse_configured_args, rust_supported_option_aliases};
 use yt_dlp_core::{INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
 use yt_dlp_core::{format_bytes, render_output_template};
 use yt_dlp_downloader::{DirectDownloader, DownloadOptions, DownloadResult};
-use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry};
+use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry, ExtractorResult};
 use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
 use yt_dlp_postprocessor::{
@@ -50,7 +50,7 @@ fn print_help() {
     println!("       yt-dlp-rs --parse-args [OPTIONS] URL [URL...]");
     println!("       yt-dlp-rs --parse-configured-args [OPTIONS] URL [URL...]");
     println!("       yt-dlp-rs --native-request [OPTIONS] URL [URL...]");
-    println!("       yt-dlp-rs --native-download [OPTIONS] URL");
+    println!("       yt-dlp-rs --native-download [OPTIONS] URL [URL...]");
     println!("       yt-dlp-rs --native-postprocess [OPTIONS] FILE");
     println!("       yt-dlp-rs --extractor-info URL");
     println!();
@@ -59,6 +59,8 @@ fn print_help() {
     println!("  --proxy, --socket-timeout, --no-check-certificates");
     println!("  --user-agent, --referer, --add-headers");
     println!("  -f, --format, --all-formats, -S, --format-sort, --output");
+    println!("  -g, --get-url, -e, --get-title, --get-id, --get-thumbnail, --get-duration");
+    println!("  --write-info-json, --batch-file");
     println!("  --extract-audio, --audio-format, --remux-video, --ffmpeg-location");
     println!("  --no-playlist, --yes-playlist, --skip-download, --no-simulate");
     println!("  --native-request performs an opt-in raw request using the Rust network stack");
@@ -212,6 +214,13 @@ fn core_utils(input: serde_json::Value) -> Result<serde_json::Value, String> {
         "str_or_none" => {
             let default = object.get("default").and_then(serde_json::Value::as_str);
             serde_json::json!(yt_dlp_core::str_or_none(object.get("value"), default))
+        }
+        "parse_iso8601" => {
+            let value = object
+                .get("value")
+                .and_then(serde_json::Value::as_str)
+                .ok_or_else(|| "parse_iso8601 requires a string value".to_owned())?;
+            serde_json::json!(yt_dlp_core::parse_iso8601(value))
         }
         _ => return Err(format!("unsupported core utility: {function}")),
     };
@@ -441,17 +450,12 @@ fn native_request_argument(args: &[String]) -> Result<(), String> {
     let ParseResult::Options(options) = result else {
         return parse_options_result(result);
     };
-    if options.urls.is_empty() {
-        return Err("--native-request requires at least one URL".to_owned());
-    }
-    if options.batchfile.is_some() {
-        return Err("--native-request does not support --batch-file yet".to_owned());
-    }
+    let urls = native_input_urls(&options)?;
 
     let director = RequestDirector::native();
     let cookie_jar = CookieJar::new().shared();
     let mut stdout = io::BufWriter::new(io::stdout().lock());
-    for url in &options.urls {
+    for url in &urls {
         let request = options.request_for_url(url, cookie_jar.clone());
         let response = director.send(&request).map_err(|error| error.to_string())?;
         if options.dumpjson || options.dump_single_json {
@@ -524,16 +528,27 @@ fn select_download_format(
 
     let mut selected = None;
     for alternative in selector.split('/') {
-        if matches!(alternative, "best" | "b" | "best*" | "bestaudio" | "ba") {
+        if matches!(alternative, "best" | "b" | "best*") {
+            selected = formats.iter().find(|format| format.get("url").is_some());
+        } else if matches!(alternative, "bestaudio" | "ba") {
             selected = formats.iter().find(|format| {
-                alternative != "bestaudio" && alternative != "ba"
-                    || format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
+                format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
             });
-        } else if matches!(alternative, "worst" | "w" | "worstaudio" | "wa") {
+        } else if matches!(alternative, "bestvideo" | "bv") {
+            selected = formats.iter().find(|format| {
+                format.get("vcodec").and_then(serde_json::Value::as_str) != Some("none")
+            });
+        } else if matches!(alternative, "worst" | "w") {
+            selected = formats
+                .iter()
+                .rev()
+                .find(|format| format.get("url").is_some());
+        } else if matches!(alternative, "worstaudio" | "wa") {
             selected = formats.iter().rev().find(|format| {
-                alternative != "worstaudio" && alternative != "wa"
-                    || format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
+                format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
             });
+        } else if alternative == "all" {
+            return Err("TODO: downloading all native formats is not implemented".to_owned());
         } else if alternative.contains('[')
             || alternative.contains('+')
             || alternative.contains(',')
@@ -735,30 +750,216 @@ fn print_formats(info: &InfoDict) {
     }
 }
 
+fn print_requested_fields(info: &InfoDict, options: &cli::CliOptions, download_url: &str) -> bool {
+    let mut printed = false;
+    if options.geturl == Some(true) {
+        println!("{download_url}");
+        printed = true;
+    }
+    if options.gettitle == Some(true) {
+        println!("{}", info.get_str("title").unwrap_or(""));
+        printed = true;
+    }
+    if options.getid == Some(true) {
+        println!("{}", info.get_str("id").unwrap_or(""));
+        printed = true;
+    }
+    if options.getthumbnail == Some(true) {
+        println!("{}", info.get_str("thumbnail").unwrap_or(""));
+        printed = true;
+    }
+    if options.getduration == Some(true) {
+        match info.get("duration") {
+            Some(value) if !value.is_null() => println!("{value}"),
+            _ => println!(),
+        }
+        printed = true;
+    }
+    printed
+}
+
+fn write_info_json(info: &InfoDict, output: &PathBuf) -> Result<PathBuf, String> {
+    let info_path = output.with_extension("info.json");
+    let bytes = serde_json::to_vec_pretty(info).map_err(|error| error.to_string())?;
+    std::fs::write(&info_path, bytes)
+        .map_err(|error| format!("could not write info JSON {info_path:?}: {error}"))?;
+    Ok(info_path)
+}
+
+fn native_input_urls(options: &cli::CliOptions) -> Result<Vec<String>, String> {
+    let mut urls = options.urls.clone();
+    if let Some(batchfile) = options.batchfile.as_deref() {
+        let contents = if batchfile == "-" {
+            let mut contents = String::new();
+            io::stdin()
+                .read_to_string(&mut contents)
+                .map_err(|error| format!("could not read batch file from stdin: {error}"))?;
+            contents
+        } else {
+            std::fs::read_to_string(batchfile)
+                .map_err(|error| format!("could not read batch file {batchfile:?}: {error}"))?
+        };
+        urls.extend(
+            contents
+                .lines()
+                .map(str::trim)
+                .filter(|url| !url.is_empty() && !url.starts_with('#'))
+                .map(str::to_owned),
+        );
+    }
+    if urls.is_empty() {
+        return Err("at least one URL or --batch-file entry is required".to_owned());
+    }
+    Ok(urls)
+}
+
+fn native_playlist_indices(spec: Option<&str>, length: usize) -> Result<Vec<usize>, String> {
+    if length == 0 {
+        return Ok(Vec::new());
+    }
+    let Some(spec) = spec else {
+        return Ok((0..length).collect());
+    };
+    let mut indices = Vec::new();
+    for token in spec
+        .split(',')
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+    {
+        if token == "-1" {
+            indices.push(length - 1);
+            continue;
+        }
+        if let Some((start, end)) = token.split_once('-') {
+            let start = if start.is_empty() {
+                1
+            } else {
+                start
+                    .parse::<usize>()
+                    .map_err(|error| format!("invalid --playlist-items range {token:?}: {error}"))?
+            };
+            let end = if end.is_empty() {
+                length
+            } else {
+                end.parse::<usize>()
+                    .map_err(|error| format!("invalid --playlist-items range {token:?}: {error}"))?
+            };
+            if start == 0 || end == 0 || start > end {
+                return Err(format!("invalid --playlist-items range: {token}"));
+            }
+            for index in start..=end {
+                if index <= length {
+                    indices.push(index - 1);
+                }
+            }
+            continue;
+        }
+        let index = token
+            .parse::<usize>()
+            .map_err(|error| format!("invalid --playlist-items value {token:?}: {error}"))?;
+        if index == 0 {
+            return Err("--playlist-items uses one-based positive indexes".to_owned());
+        }
+        if index <= length {
+            indices.push(index - 1);
+        }
+    }
+    indices.sort_unstable();
+    indices.dedup();
+    Ok(indices)
+}
+
 fn native_download_argument(args: &[String]) -> Result<(), String> {
     let result = parse_configured_args(args).map_err(|error| error.to_string())?;
     let ParseResult::Options(options) = result else {
         return parse_options_result(result);
     };
-    if options.urls.len() != 1 {
-        return Err("--native-download currently requires exactly one URL".to_owned());
-    }
-    if options.batchfile.is_some() {
-        return Err("--native-download does not support --batch-file yet".to_owned());
-    }
-    let url = &options.urls[0];
+    let urls = native_input_urls(&options)?;
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
+    let extraction_context = ExtractionContext::native();
+    for url in urls {
+        let mut per_url = options.clone();
+        per_url.urls = vec![url];
+        native_download_one(&per_url, &registry, &extraction_context)?;
+    }
+    Ok(())
+}
+
+fn native_download_one(
+    options: &cli::CliOptions,
+    registry: &ExtractorRegistry,
+    extraction_context: &ExtractionContext,
+) -> Result<(), String> {
+    let url = options
+        .urls
+        .first()
+        .ok_or_else(|| "native download requires one URL".to_owned())?;
     let extractor = registry
         .find(url)
         .ok_or_else(|| format!("no extractor matched URL: {url}"))?;
-    let extraction_context = ExtractionContext::native();
-    let info = extractor
-        .extract_with_context(url, &extraction_context)
-        .map_err(|error| error.to_string())?
-        .into_info_dict();
-    if info.get("_type").and_then(serde_json::Value::as_str) == Some("playlist") {
-        return Err("TODO: native playlist entry selection is not implemented".to_owned());
+    let extraction = extractor
+        .extract_with_context(url, extraction_context)
+        .map_err(|error| error.to_string())?;
+    match extraction {
+        ExtractorResult::Single(info) => native_download_info(options, &info, extraction_context),
+        ExtractorResult::Playlist { info, entries } => {
+            native_download_playlist(options, info, entries, extraction_context)
+        }
     }
+}
+
+fn native_download_playlist(
+    options: &cli::CliOptions,
+    mut info: InfoDict,
+    entries: Vec<InfoDict>,
+    extraction_context: &ExtractionContext,
+) -> Result<(), String> {
+    if options.noplaylist {
+        return Err(
+            "TODO: --no-playlist requires a single-item extractor view for this URL".to_owned(),
+        );
+    }
+    if options.dump_single_json {
+        info.insert("_type", serde_json::json!("playlist"));
+        info.insert(
+            "entries",
+            serde_json::to_value(entries).map_err(|error| error.to_string())?,
+        );
+        return print_info_json(&info);
+    }
+    if options.listformats == Some(true) {
+        for entry in &entries {
+            print_formats(entry);
+        }
+        return Ok(());
+    }
+    let indices = native_playlist_indices(options.playlist_items.as_deref(), entries.len())?;
+    for (position, index) in indices.into_iter().enumerate() {
+        let mut entry = entries[index].clone();
+        if let Some(title) = info.get("title") {
+            entry.insert("playlist", title.clone());
+        }
+        if let Some(playlist_id) = info.get("id") {
+            entry.insert("playlist_id", playlist_id.clone());
+        }
+        entry.insert("playlist_index", serde_json::json!(index + 1));
+        if options.verbose {
+            eprintln!(
+                "[playlist] downloading entry {} of {}",
+                position + 1,
+                entries.len()
+            );
+        }
+        native_download_info(options, &entry, extraction_context)?;
+    }
+    Ok(())
+}
+
+fn native_download_info(
+    options: &cli::CliOptions,
+    info: &InfoDict,
+    extraction_context: &ExtractionContext,
+) -> Result<(), String> {
     if options.dumpjson || options.dump_single_json {
         return print_info_json(&info);
     }
@@ -766,12 +967,25 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
         print_formats(&info);
         return Ok(());
     }
-    if options.skip_download {
+    let selector = options
+        .format
+        .as_deref()
+        .or(options.extractaudio.then_some("bestaudio"));
+    let (download_url, selected_ext) = select_download_format(&info, selector)?;
+    let request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
+    let output = direct_output_path(info, options, selected_ext.as_deref())?;
+    let requested_fields = print_requested_fields(info, options, &download_url);
+    let info_path = if options.writeinfojson == Some(true) {
+        Some(write_info_json(info, &output)?)
+    } else {
+        None
+    };
+    if requested_fields || options.skip_download {
+        if let Some(info_path) = info_path.as_ref() {
+            eprintln!("[info] {}", info_path.display());
+        }
         return Ok(());
     }
-    let (download_url, selected_ext) = select_download_format(&info, options.format.as_deref())?;
-    let request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
-    let output = direct_output_path(&info, &options, selected_ext.as_deref())?;
     let download_options = DownloadOptions {
         simulate: options.simulate == Some(true),
         overwrite: options.overwrites != Some(false),
@@ -825,7 +1039,7 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
             }
             Some(run_native_postprocessor(
                 &post_info,
-                &options,
+                options,
                 result.simulated,
             )?)
         } else {
@@ -859,6 +1073,9 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
             "[download] simulated {} bytes from {}",
             result.bytes, result.url
         );
+    }
+    if let Some(info_path) = info_path {
+        eprintln!("[info] {}", info_path.display());
     }
     Ok(())
 }
@@ -1039,5 +1256,85 @@ fn main() {
                 std::process::exit(2);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod native_tests {
+    use super::*;
+
+    fn sample_info() -> InfoDict {
+        let mut info = InfoDict::new();
+        info.insert(
+            "formats",
+            serde_json::json!([
+                {"format_id": "ogg", "ext": "ogg", "vcodec": "none", "url": "https://media.test/a.ogg"},
+                {"format_id": "mp3", "ext": "mp3", "vcodec": "none", "url": "https://media.test/a.mp3"},
+                {"format_id": "video", "ext": "mp4", "url": "https://media.test/a.mp4"}
+            ]),
+        );
+        info
+    }
+
+    #[test]
+    fn native_format_selection_supports_exact_audio_and_video_aliases() {
+        let info = sample_info();
+        assert_eq!(
+            select_download_format(&info, Some("mp3")).unwrap().0,
+            "https://media.test/a.mp3"
+        );
+        assert_eq!(
+            select_download_format(&info, Some("bv")).unwrap().0,
+            "https://media.test/a.mp4"
+        );
+        assert_eq!(
+            select_download_format(&info, Some("ba")).unwrap().0,
+            "https://media.test/a.ogg"
+        );
+    }
+
+    #[test]
+    fn complex_native_format_selection_is_explicitly_todo() {
+        let error =
+            select_download_format(&sample_info(), Some("bestvideo+bestaudio")).unwrap_err();
+        assert!(error.starts_with("TODO:"));
+    }
+
+    #[test]
+    fn native_input_urls_combines_command_line_and_batch_file_entries() {
+        let path = std::env::temp_dir().join(format!(
+            "yt-dlp-rs-batch-{}-{}.txt",
+            std::process::id(),
+            std::thread::current().name().unwrap_or("test")
+        ));
+        std::fs::write(
+            &path,
+            "\n# ignored\nhttps://example.test/one\n  https://example.test/two  \n",
+        )
+        .unwrap();
+        let mut options = cli::CliOptions::default();
+        options.urls.push("https://example.test/zero".to_owned());
+        options.batchfile = Some(path.to_string_lossy().into_owned());
+
+        let urls = native_input_urls(&options).unwrap();
+        assert_eq!(
+            urls,
+            vec![
+                "https://example.test/zero",
+                "https://example.test/one",
+                "https://example.test/two"
+            ]
+        );
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn native_playlist_indices_supports_ranges_and_last_entry() {
+        assert_eq!(
+            native_playlist_indices(Some("1,3-4,-1"), 5).unwrap(),
+            vec![0, 2, 3, 4]
+        );
+        assert!(native_playlist_indices(Some("0"), 5).is_err());
+        assert!(native_playlist_indices(Some("4-2"), 5).is_err());
     }
 }

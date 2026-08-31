@@ -91,5 +91,13 @@
     "--remote-components",
     "ejs:npm",
     "video"
+  ],
+  [
+    "-ge",
+    "--get-id",
+    "--get-thumbnail",
+    "--get-duration",
+    "--write-info-json",
+    "video"
   ]
 ]

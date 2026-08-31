@@ -144,8 +144,26 @@ self-update behavior.
 - [x] native direct-resource downloader with atomic output commits
 - [x] native GenericIE URL metadata and opt-in `--native-download` path
 - [x] native extractor context with shared Rust request/cookie state
+- [x] native Archive.org metadata/file and playlist-result extractor
+- [x] native AudioBoom embedded clip-store/audio extractor
+- [x] native Bandcamp track JSON/audio extractor
+- [x] native BannedVideo GraphQL metadata/media/comment extractor
+- [x] native BitChute media and metadata API extractor
+- [x] native Coub API media-version extractor
+- [x] native Freesound HTML/Open Graph audio extractor
+- [x] native Yandex Disk store/public-media extractor
+- [x] native Vocaroo HEAD-checked direct-audio extractor
+- [x] native Google Drive playback-transcode extractor
 - [x] native Clyp JSON API extractor with audio format records
 - [x] native Breitbart page metadata and JWPlayer HLS extractor
+- [x] native Audius host discovery, resolution, and stream extractor
+- [x] native Blerp GraphQL audio extractor with POST request support
+- [x] native Acast episode JSON/API extractor
+- [x] native Acast channel playlist result contract
+- [x] native Dumpert API/variant extractor
+- [x] native Audiodraft contest-entry API extractor
+- [x] native Audiomack song API extractor
+- [x] native Aitube Next-data/HLS extractor
 - [x] native HLS media-playlist parsing, segment concatenation, and retries
 - [x] native DASH SegmentList parsing and concatenation
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
@@ -153,6 +171,7 @@ self-update behavior.
 - [x] direct-resource resume using HTTP Range and partial-file reconciliation
 - [x] initial `InfoDict` accessors and Python-style output-template rendering
 - [x] core URL/protocol and scalar conversion utility slice with differential fixtures
+- [x] native ISO-8601 timestamp parsing with differential fixtures
 - [x] generated inventory of all 323 Python CLI option definitions and 394 aliases
 - [x] postprocessor lifecycle contract and shell-free FFmpeg subprocess bridge
 - [x] opt-in native postprocessing for remuxing and audio extraction
@@ -161,6 +180,10 @@ self-update behavior.
 - [x] Python invocation path rejected by the product binary
 - [x] native format-ID/extension selection for extracted format records
 - [x] native metadata and format-list output for `--dump-json`/`--list-formats`
+- [x] native `--get-url`, `--get-title`, `--get-id`, `--get-thumbnail`, and `--get-duration`
+- [x] native `--write-info-json` output beside the selected media path
+- [x] native multi-URL execution and `--batch-file` input for the download loop
+- [x] native playlist selection for single-entry output, -j, -J, and ranges
 
 Next: add native downloader differential fixtures, expand the base
 extractor/result contracts, port the remaining FFmpeg operations and option

@@ -48,6 +48,12 @@ static DURATION_TEXT_RE: LazyLock<Regex> = LazyLock::new(|| {
     )
     .unwrap()
 });
+static ISO8601_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(?:\.\d+)?(?P<timezone>Z|(?P<sign>[+-])(?P<tzhour>\d{2}):?(?P<tzminute>\d{2}))?$",
+    )
+    .unwrap()
+});
 static URL_SCHEME_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z][A-Za-z0-9+.-]*:").unwrap());
 
@@ -372,6 +378,70 @@ pub fn parse_duration(input: &str) -> Option<f64> {
     None
 }
 
+fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
+    let year = year - i64::from(month <= 2);
+    let era = if year >= 0 {
+        year / 400
+    } else {
+        (year - 399) / 400
+    };
+    let year_of_era = year - era * 400;
+    let month_prime = month + if month > 2 { -3 } else { 9 };
+    let day_of_year = (153 * month_prime + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
+}
+
+/// Parse the ISO-8601 timestamp form used by extractor APIs into Unix seconds.
+/// Fractional seconds are discarded to match yt-dlp's parse_iso8601 utility.
+pub fn parse_iso8601(input: &str) -> Option<i64> {
+    let captures = ISO8601_RE.captures(input.trim())?;
+    let year = captures.name("year")?.as_str().parse::<i64>().ok()?;
+    let month = captures.name("month")?.as_str().parse::<i64>().ok()?;
+    let day = captures.name("day")?.as_str().parse::<i64>().ok()?;
+    let hour = captures.name("hour")?.as_str().parse::<i64>().ok()?;
+    let minute = captures.name("minute")?.as_str().parse::<i64>().ok()?;
+    let second = captures.name("second")?.as_str().parse::<i64>().ok()?;
+    if !(1..=12).contains(&month)
+        || !(0..=23).contains(&hour)
+        || !(0..=59).contains(&minute)
+        || !(0..=59).contains(&second)
+    {
+        return None;
+    }
+    let leap_year = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days_in_month = match month {
+        2 if leap_year => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+    if !(1..=days_in_month).contains(&day) {
+        return None;
+    }
+    let offset = match captures.name("sign") {
+        Some(sign) => {
+            let hours = captures
+                .name("tzhour")
+                .and_then(|value| value.as_str().parse::<i64>().ok())?;
+            let minutes = captures
+                .name("tzminute")
+                .and_then(|value| value.as_str().parse::<i64>().ok())?;
+            if hours > 23 || minutes > 59 {
+                return None;
+            }
+            let seconds = hours * 3_600 + minutes * 60;
+            if sign.as_str() == "+" {
+                seconds
+            } else {
+                -seconds
+            }
+        }
+        None => 0,
+    };
+    Some(days_from_civil(year, month, day) * 86_400 + hour * 3_600 + minute * 60 + second - offset)
+}
+
 /// Determine a URL's extension using the same conservative rules as
 /// yt-dlp's utility function. Query strings are excluded, while a trailing
 /// slash is accepted for known extension values such as `mp4/`.
@@ -667,6 +737,20 @@ mod tests {
         assert_eq!(parse_duration("PT1H0.040S"), Some(3_600.04));
         assert_eq!(parse_duration("01:02:03:050"), Some(3_723.05));
         assert_eq!(parse_duration("invalid"), None);
+    }
+
+    #[test]
+    fn parse_iso8601_matches_utc_and_offset_examples() {
+        assert_eq!(parse_iso8601("2015-04-08T00:00:00Z"), Some(1_428_451_200));
+        assert_eq!(
+            parse_iso8601("2015-04-08T02:00:00+02:00"),
+            Some(1_428_451_200)
+        );
+        assert_eq!(
+            parse_iso8601("2015-04-08T00:00:00-0500"),
+            Some(1_428_469_200)
+        );
+        assert_eq!(parse_iso8601("2015-02-29T00:00:00Z"), None);
     }
 
     #[test]

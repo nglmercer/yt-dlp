@@ -40,6 +40,12 @@ pub struct CliOptions {
     pub noplaylist: bool,
     pub dumpjson: bool,
     pub dump_single_json: bool,
+    pub geturl: Option<bool>,
+    pub gettitle: Option<bool>,
+    pub getid: Option<bool>,
+    pub getthumbnail: Option<bool>,
+    pub getduration: Option<bool>,
+    pub writeinfojson: Option<bool>,
     pub listformats: Option<bool>,
     pub batchfile: Option<String>,
     pub playlist_items: Option<String>,
@@ -50,8 +56,8 @@ pub struct CliOptions {
     pub config_locations: Option<Vec<String>>,
 }
 
-/// Option spellings understood by the typed Rust parser.  The generated
-/// The generated source manifest is compared with this list for migration diagnostics; it
+/// Option spellings understood by the typed Rust parser. The generated source manifest is
+/// compared with this list for migration diagnostics; it
 /// prevents an option from disappearing when yt-dlp adds a new alias.
 pub fn rust_supported_option_aliases() -> &'static [&'static str] {
     &[
@@ -133,6 +139,15 @@ pub fn rust_supported_option_aliases() -> &'static [&'static str] {
         "-j",
         "-J",
         "-F",
+        "-g",
+        "--get-url",
+        "-e",
+        "--get-title",
+        "--get-id",
+        "--get-thumbnail",
+        "--get-duration",
+        "--write-info-json",
+        "--no-write-info-json",
         "-x",
         "-k",
         "-i",
@@ -216,6 +231,12 @@ impl Default for CliOptions {
             noplaylist: false,
             dumpjson: false,
             dump_single_json: false,
+            geturl: Some(false),
+            gettitle: Some(false),
+            getid: Some(false),
+            getthumbnail: Some(false),
+            getduration: Some(false),
+            writeinfojson: None,
             listformats: None,
             batchfile: None,
             playlist_items: None,
@@ -745,6 +766,13 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                 "--simulate" => options.simulate = Some(true),
                 "--no-simulate" => options.simulate = Some(false),
                 "--skip-download" | "--no-download" => options.skip_download = true,
+                "--get-url" => options.geturl = Some(true),
+                "--get-title" => options.gettitle = Some(true),
+                "--get-id" => options.getid = Some(true),
+                "--get-thumbnail" => options.getthumbnail = Some(true),
+                "--get-duration" => options.getduration = Some(true),
+                "--write-info-json" => options.writeinfojson = Some(true),
+                "--no-write-info-json" => options.writeinfojson = Some(false),
                 "--format" => {
                     options.format = Some(option_value(args, &mut index, option, inline_value)?);
                 }
@@ -879,6 +907,8 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     'j' => options.dumpjson = true,
                     'J' => options.dump_single_json = true,
                     'F' => options.listformats = Some(true),
+                    'g' => options.geturl = Some(true),
+                    'e' => options.gettitle = Some(true),
                     'x' => options.extractaudio = true,
                     'k' => options.keepvideo = true,
                     'i' | 'n' => {}
@@ -938,6 +968,8 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
             "-j" => options.dumpjson = true,
             "-J" => options.dump_single_json = true,
             "-F" => options.listformats = Some(true),
+            "-g" => options.geturl = Some(true),
+            "-e" => options.gettitle = Some(true),
             "-x" => options.extractaudio = true,
             "-k" => options.keepvideo = true,
             "-i" => {}
