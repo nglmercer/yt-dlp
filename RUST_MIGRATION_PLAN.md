@@ -212,6 +212,7 @@ self-update behavior.
 - [x] native eBay embedded HLS/DASH extractor
 - [x] native Sen API/HLS extractor
 - [x] native Roya TV live-channel API/HLS extractor
+- [x] native ReverbNation song API/audio extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
