@@ -35,4 +35,5 @@ include!("tests_parts/aliexpress.rs");
 include!("tests_parts/fczenit.rs");
 include!("tests_parts/clipchamp.rs");
 include!("tests_parts/baidu.rs");
+include!("tests_parts/footyroom.rs");
 include!("tests_parts/fathom.rs");

@@ -234,6 +234,7 @@ self-update behavior.
 - [x] native FC Zenit player-config/API progressive extractor
 - [x] native Clipchamp Next.js/Cloudflare Stream extractor
 - [x] native Baidu Video API playlist extractor
+- [x] native FootyRoom playlist with Streamable URL entries
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
