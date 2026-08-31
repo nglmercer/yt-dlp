@@ -142,6 +142,7 @@ self-update behavior.
 - [x] source-compatible extractor regex compilation with coverage diagnostics
 - [x] modular extractor crate split into shared contracts, native implementations, registry, and tests
 - [x] domain-focused native extractor modules behind a shared Rust namespace
+- [x] modular networking, downloader, CLI, core, postprocessor, JavaScript, and extractor test sources into bounded Rust units
 - [x] CLI network-option adapter into the native request director
 - [x] opt-in extractor selection diagnostics (`--extractor-info`)
 - [x] native direct-resource downloader with atomic output commits
