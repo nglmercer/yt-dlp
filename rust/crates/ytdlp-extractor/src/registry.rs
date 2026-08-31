@@ -95,6 +95,8 @@ impl ExtractorRegistry {
                 registry.register(MuenchenTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "VODPlatformIE" {
                 registry.register(VodPlatformExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "AliExpressLiveIE" {
+                registry.register(AliExpressLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {

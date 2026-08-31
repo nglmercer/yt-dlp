@@ -31,4 +31,5 @@ include!("tests_parts/newsy.rs");
 include!("tests_parts/clubic.rs");
 include!("tests_parts/muenchentv.rs");
 include!("tests_parts/vodplatform.rs");
+include!("tests_parts/aliexpress.rs");
 include!("tests_parts/fathom.rs");

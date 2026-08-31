@@ -6,4 +6,5 @@ include!("video_services_parts/newsy.rs");
 include!("video_services_parts/clubic.rs");
 include!("video_services_parts/muenchentv.rs");
 include!("video_services_parts/vodplatform.rs");
+include!("video_services_parts/aliexpress.rs");
 include!("video_services_parts/fathom.rs");
