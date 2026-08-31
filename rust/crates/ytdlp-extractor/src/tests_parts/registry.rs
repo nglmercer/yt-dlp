@@ -96,6 +96,7 @@ fn unported_descriptor_is_explicitly_unsupported() {
     .unwrap();
     let error = extractor.extract("https://test.example/video").unwrap_err();
     assert_eq!(error.kind, ExtractorErrorKind::Unsupported);
+    assert!(error.message.starts_with("TODO:"));
     assert!(error.message.contains("not ported"));
 }
 

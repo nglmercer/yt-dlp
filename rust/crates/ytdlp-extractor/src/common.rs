@@ -242,7 +242,7 @@ pub trait InfoExtractor: Send + Sync {
         Err(ExtractorError::new(
             ExtractorErrorKind::Unsupported,
             format!(
-                "extractor {} is not ported to Rust yet",
+                "TODO: extractor {} is not ported to Rust yet",
                 self.descriptor().key
             ),
         ))
