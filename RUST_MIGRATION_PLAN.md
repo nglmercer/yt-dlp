@@ -141,6 +141,7 @@ self-update behavior.
 - [x] generated ordered inventory for all 1,752 Python extractor registrations
 - [x] source-compatible extractor regex compilation with coverage diagnostics
 - [x] modular extractor crate split into shared contracts, native implementations, registry, and tests
+- [x] domain-focused native extractor modules behind a shared Rust namespace
 - [x] CLI network-option adapter into the native request director
 - [x] opt-in extractor selection diagnostics (`--extractor-info`)
 - [x] native direct-resource downloader with atomic output commits
