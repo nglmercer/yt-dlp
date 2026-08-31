@@ -25,5 +25,6 @@ include!("tests_parts/filmarchiv.rs");
 include!("tests_parts/netzkino.rs");
 include!("tests_parts/unistra.rs");
 include!("tests_parts/cineteca.rs");
+include!("tests_parts/nuevo.rs");
 include!("tests_parts/angel.rs");
 include!("tests_parts/fathom.rs");

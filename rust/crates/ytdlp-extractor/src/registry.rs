@@ -205,6 +205,10 @@ impl ExtractorRegistry {
                 registry.register(UnistraExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CinetecaMilanoIE" {
                 registry.register(CinetecaMilanoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "NonkTubeIE" {
+                registry.register(NonkTubeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LoveHomePornIE" {
+                registry.register(LoveHomePornExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FathomIE" {
                 registry.register(FathomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
