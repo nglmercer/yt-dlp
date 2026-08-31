@@ -1,8 +1,8 @@
 //! Foundational types for the experimental Rust migration.
 //!
 //! This crate deliberately starts with a dynamic info dictionary. Extractors
-//! in yt-dlp add service-specific fields, so a fixed Rust struct would lose
-//! information and break compatibility.
+//! add service-specific fields, so a fixed Rust struct would lose information
+//! and break behavioral parity.
 
 use indexmap::IndexMap;
 use regex::Regex;
@@ -51,11 +51,11 @@ static DURATION_TEXT_RE: LazyLock<Regex> = LazyLock::new(|| {
 static URL_SCHEME_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z][A-Za-z0-9+.-]*:").unwrap());
 
-/// Backend used for a capability while the migration is in progress.
+/// Implementation state used by the migration matrix.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EngineMode {
     Rust,
-    PythonCompatibility,
+    Todo,
 }
 
 /// A capability entry used by the migration matrix and diagnostics.
@@ -520,7 +520,7 @@ pub fn str_or_none(value: Option<&Value>, default: Option<&str>) -> Option<Strin
 }
 
 /// Capabilities available in the first scaffold. No production feature is
-/// claimed until it has a differential test against the Python reference.
+/// claimed until it has a differential test against the offline reference.
 pub const INITIAL_CAPABILITIES: &[Capability] = &[
     Capability {
         name: "info-dict-foundation",

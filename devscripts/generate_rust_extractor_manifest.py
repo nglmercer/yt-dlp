@@ -3,8 +3,8 @@
 
 The manifest is deliberately generated from yt-dlp's public extractor
 registry. It records every extractor, including embed-only entries that have
-no URL matcher, so the Rust side can report native and compatibility coverage
-without maintaining a second hand-written inventory.
+no URL matcher, so the Rust side can report native and TODO coverage without
+maintaining a second hand-written inventory.
 """
 
 import json

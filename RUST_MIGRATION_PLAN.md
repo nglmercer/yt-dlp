@@ -1,8 +1,8 @@
 # Python to Rust migration plan
 
-Status: Phase 0 started. The Python implementation remains the reference
-implementation and the default executable. The Rust workspace is experimental
-until the parity gates below are met.
+Status: Phase 0 started. The Python tree remains available only as an offline
+behavioral reference while the executable is migrated. The Rust workspace is
+the only product runtime; unsupported surfaces fail explicitly as TODO.
 
 ## Scope
 
@@ -17,12 +17,14 @@ option definitions, and 56 test modules.
 
 ## Invariants
 
-1. Python is the behavioral oracle until Rust is promoted.
-2. No extractor or protocol is silently dropped; every capability is marked
-   native, compatibility-bridged, or incomplete.
-3. Compatibility is measured with fixtures and differential tests, not only
-   compilation or unit-test success.
-4. Rust is initially shipped as an opt-in experimental engine.
+1. Python may be used as an offline behavioral oracle during development, but
+   the Rust executable never imports, embeds, or invokes Python.
+2. No extractor or protocol is silently dropped; every capability is either
+   native Rust or explicitly marked TODO.
+3. Behavioral parity is measured with fixtures and differential tests, not
+   only compilation or unit-test success.
+4. Rust-only execution is the default from the first usable binary; feature
+   gaps are reported instead of falling back to another runtime.
 
 ## Target workspace
 
@@ -36,13 +38,13 @@ rust/
     downloader/       protocols, fragments, resume, live streams
     postprocessor/    FFmpeg and metadata integrations
     javascript/       runtime and EJS interfaces
-    plugins/          compatibility and native plugin ABI
-    compatibility/    Python bridge and differential runner
+    plugins/          native plugin ABI
+    validation/       offline differential runner and fixtures
 ```
 
 ## Stages
 
-### 0. Compatibility contract
+### 0. Behavioral parity contract
 
 Build a reference runner that captures exit code, stdout, stderr, warnings,
 debug output, sanitized info JSON, generated files, and media metadata. Add
@@ -58,15 +60,16 @@ download archives. Preserve arbitrary info fields and Python insertion order.
 
 Reproduce option parsing, aliases, configuration precedence, environment
 variables, help/completion output, errors, exit codes, and signal handling.
-Expose a native Rust API and a Python compatibility wrapper for callbacks,
-custom format selectors, loggers, and postprocessors.
+Expose a native Rust API. Callbacks, custom format selectors, loggers, and
+postprocessors are Rust traits; unsupported extension points are TODO until
+their native interfaces are implemented.
 
 ### 3. Networking and cookies
 
 Port the request director/handler model, headers, proxies, TLS, redirects,
 compression, WebSockets, SOCKS, browser-cookie databases, keyrings, and
-impersonation. Keep a compatibility backend for browser fingerprinting until
-Rust behavior is equivalent.
+impersonation. Unsupported browser fingerprinting behavior is a visible TODO,
+not a compatibility backend.
 
 ### 4. Downloaders and postprocessors
 
@@ -91,11 +94,9 @@ existing URL-matching and `info_dict` tests.
 
 ### 7. Plugins and rollout
 
-Keep a Python plugin bridge during migration. Define a versioned native plugin
-ABI for the Python-free distribution; existing Python plugin source cannot be
-loaded by a pure-Rust binary without embedding Python. Release in stages:
-experimental binary, opt-in Rust engine with fallback, Rust default, then
-remove the fallback after a deprecation cycle.
+Define a versioned native plugin ABI for the Python-free distribution. Python
+plugin source is not loaded by the Rust binary. Release in stages by increasing
+native coverage; no runtime fallback is permitted.
 
 ### 8. Packaging and updates
 
@@ -107,10 +108,10 @@ self-update behavior.
 
 - all offline/core tests pass in both implementations
 - extractor matching has no missing or duplicate owners
-- every supported extractor/protocol is native or explicitly bridged
+- every supported extractor/protocol is native or explicitly marked TODO
 - CLI/API outputs, errors, warnings, and exit codes match
 - networking, cookies, JavaScript, and FFmpeg fixture tests pass
-- plugins have a documented compatibility path
+- native plugins have a documented ABI and unsupported Python plugins fail TODO
 - release artifacts and self-update verification pass on every target
 
 ## Initial implementation slice
@@ -118,7 +119,7 @@ self-update behavior.
 - [x] Rust workspace and experimental `yt-dlp-rs` binary
 - [x] insertion-order-preserving `InfoDict` foundation
 - [x] explicit migration status/capability model
-- [x] Python reference retained as the default
+- [x] Python source retained only as an offline migration reference
 - [x] newline-delimited Python/Rust differential runner
 - [x] first utility port: `format_bytes`
 - [x] second utility port: `parse_bytes`
@@ -131,17 +132,20 @@ self-update behavior.
 - [x] HTTPS/proxy-capable handler with compression decoding
 - [x] RFC 6265 cookie-jar state across requests and redirects
 - [x] response framing for content-length, chunked, and close-delimited bodies
-- [x] native request director with direct and fallback handlers
+- [x] native request director with direct and secondary native handlers
 - [x] typed Rust CLI option model and deterministic parser slice
 - [x] Python/Rust differential fixtures for the initial CLI option slice
 - [x] dynamic aliases, preset aliases, and shell-like config tokenization
 - [x] explicit config-file precedence overlaid by command-line options
 - [x] generated ordered inventory for all 1,752 Python extractor registrations
-- [x] Python-compatible extractor regex compilation with coverage diagnostics
+- [x] source-compatible extractor regex compilation with coverage diagnostics
 - [x] CLI network-option adapter into the native request director
 - [x] opt-in extractor selection diagnostics (`--extractor-info`)
 - [x] native direct-resource downloader with atomic output commits
 - [x] native GenericIE URL metadata and opt-in `--native-download` path
+- [x] native extractor context with shared Rust request/cookie state
+- [x] native Clyp JSON API extractor with audio format records
+- [x] native Breitbart page metadata and JWPlayer HLS extractor
 - [x] native HLS media-playlist parsing, segment concatenation, and retries
 - [x] native DASH SegmentList parsing and concatenation
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
@@ -153,10 +157,13 @@ self-update behavior.
 - [x] postprocessor lifecycle contract and shell-free FFmpeg subprocess bridge
 - [x] opt-in native postprocessing for remuxing and audio extraction
 - [x] JavaScript runtime discovery/version gating and stdin/temp-file adapters
-- [x] explicit process-based Python compatibility crate for unsupported surfaces
-- [x] explicit Python compatibility bridge for ordinary Rust-binary invocations
+- [x] Rust-only default executable with explicit TODO errors for unported surfaces
+- [x] Python invocation path rejected by the product binary
+- [x] native format-ID/extension selection for extracted format records
+- [x] native metadata and format-list output for `--dump-json`/`--list-formats`
 
-Next: add downloader differential fixtures, expand the base extractor/result
-contracts, port the remaining FFmpeg operations and option groups, wire EJS
-challenge batches through the runtime adapter, and continue protocol coverage
-while keeping the Python compatibility backend available.
+Next: add native downloader differential fixtures, expand the base
+extractor/result contracts, port the remaining FFmpeg operations and option
+groups, wire EJS challenge batches through the Rust runtime adapter, and
+continue protocol coverage. Python remains only a test oracle and is never
+called by the product binary.

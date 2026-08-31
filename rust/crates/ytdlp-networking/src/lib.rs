@@ -484,8 +484,8 @@ impl Response {
 /// A request contract corresponding to yt-dlp's networking `Request`.
 ///
 /// The native representation currently supports in-memory byte payloads.
-/// Streaming/file-like Python payloads will be handled by the compatibility
-/// adapter or a later `RequestBody` abstraction.
+/// Streaming/file-like payloads are an explicit TODO until a native
+/// `RequestBody` abstraction is implemented.
 #[derive(Debug, Clone)]
 pub struct Request {
     url: String,
@@ -1322,7 +1322,7 @@ impl RequestDirector {
     }
 
     /// Construct the native HTTP stack with direct HTTP first and the
-    /// HTTPS/proxy/compression-capable backend as its fallback.
+    /// HTTPS/proxy/compression-capable native backend as the secondary handler.
     pub fn native() -> Self {
         let mut director = Self::new();
         director.add_handler(HttpHandler);

@@ -51,7 +51,7 @@ pub struct CliOptions {
 }
 
 /// Option spellings understood by the typed Rust parser.  The generated
-/// Python manifest is compared with this list for migration diagnostics; it
+/// The generated source manifest is compared with this list for migration diagnostics; it
 /// prevents an option from disappearing when yt-dlp adds a new alias.
 pub fn rust_supported_option_aliases() -> &'static [&'static str] {
     &[
@@ -145,7 +145,7 @@ pub fn rust_supported_option_aliases() -> &'static [&'static str] {
 impl CliOptions {
     /// Translate the network-facing CLI options into the shared request
     /// contract. Download and extractor layers can reuse this adapter while
-    /// the rest of the command remains on the Python compatibility path.
+    /// the rest of the command remains on the native Rust path.
     pub fn request_for_url(&self, url: &str, cookie_jar: SharedCookieJar) -> Request {
         let mut request = Request::new(url).with_cookie_jar(cookie_jar);
         for (name, value) in &self.headers {
@@ -656,7 +656,7 @@ fn expand_aliases(args: &[String]) -> Result<Vec<String>, CliError> {
 /// Parse the migration's typed CLI subset.
 ///
 /// The parser deliberately reports unknown options instead of silently
-/// accepting them. The supported set is expanded in lockstep with the Python
+/// accepting them. The supported set is expanded in lockstep with the source
 /// option schema and differential fixtures.
 pub fn parse_args(args: &[String]) -> Result<ParseResult, CliError> {
     let args = expand_aliases(args)?;
@@ -701,12 +701,11 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     )?);
                 }
                 "--no-check-certificates" => options.no_check_certificate = true,
-                "--js-runtimes" => options.js_runtimes.push(option_value(
-                    args,
-                    &mut index,
-                    option,
-                    inline_value,
-                )?),
+                "--js-runtimes" => {
+                    options
+                        .js_runtimes
+                        .push(option_value(args, &mut index, option, inline_value)?)
+                }
                 "--no-js-runtimes" => options.js_runtimes.clear(),
                 "--remote-components" => options.remote_components.push(option_value(
                     args,

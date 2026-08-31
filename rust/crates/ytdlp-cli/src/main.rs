@@ -8,7 +8,7 @@ use cli::{ParseResult, parse_args, parse_configured_args, rust_supported_option_
 use yt_dlp_core::{INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
 use yt_dlp_core::{format_bytes, render_output_template};
 use yt_dlp_downloader::{DirectDownloader, DownloadOptions, DownloadResult};
-use yt_dlp_extractor::ExtractorRegistry;
+use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry};
 use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
 use yt_dlp_postprocessor::{
@@ -330,7 +330,7 @@ fn parity_response(request: ParityRequest) -> ParityResponse {
                 serde_json::Value::String(value) => {
                     Ok(yt_dlp_core::parse_duration(&value).map(|value| serde_json::json!(value)))
                 }
-                // Python returns None for non-string inputs as well as None.
+                // The reference behavior returns None for non-string inputs.
                 _ => Ok(None),
             },
             "request_model" => request_model(request.input).map(Some),
@@ -467,8 +467,15 @@ fn native_request_argument(args: &[String]) -> Result<(), String> {
     stdout.flush().map_err(|error| error.to_string())
 }
 
-fn direct_output_path(info: &InfoDict, options: &cli::CliOptions) -> Result<PathBuf, String> {
+fn direct_output_path(
+    info: &InfoDict,
+    options: &cli::CliOptions,
+    selected_ext: Option<&str>,
+) -> Result<PathBuf, String> {
     let mut output_info = info.clone();
+    if let Some(selected_ext) = selected_ext {
+        output_info.insert("ext", serde_json::json!(selected_ext));
+    }
     if matches!(
         info.get("ext").and_then(serde_json::Value::as_str),
         Some("m3u8" | "mpd")
@@ -483,6 +490,80 @@ fn direct_output_path(info: &InfoDict, options: &cli::CliOptions) -> Result<Path
     render_output_template(&template, &output_info)
         .map(PathBuf::from)
         .map_err(|error| error.to_string())
+}
+
+fn format_records(info: &InfoDict) -> Vec<&serde_json::Value> {
+    info.get("formats")
+        .and_then(serde_json::Value::as_array)
+        .map(|formats| formats.iter().collect())
+        .unwrap_or_default()
+}
+
+fn select_download_format(
+    info: &InfoDict,
+    selector: Option<&str>,
+) -> Result<(String, Option<String>), String> {
+    let formats = format_records(info);
+    let Some(selector) = selector else {
+        let url = info
+            .get("url")
+            .and_then(serde_json::Value::as_str)
+            .or_else(|| {
+                formats
+                    .first()
+                    .and_then(|format| format.get("url"))
+                    .and_then(serde_json::Value::as_str)
+            })
+            .ok_or_else(|| "TODO: extractor returned no downloadable native URL".to_owned())?;
+        let ext = info
+            .get("ext")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned);
+        return Ok((url.to_owned(), ext));
+    };
+
+    let mut selected = None;
+    for alternative in selector.split('/') {
+        if matches!(alternative, "best" | "b" | "best*" | "bestaudio" | "ba") {
+            selected = formats.iter().find(|format| {
+                alternative != "bestaudio" && alternative != "ba"
+                    || format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
+            });
+        } else if matches!(alternative, "worst" | "w" | "worstaudio" | "wa") {
+            selected = formats.iter().rev().find(|format| {
+                alternative != "worstaudio" && alternative != "wa"
+                    || format.get("vcodec").and_then(serde_json::Value::as_str) == Some("none")
+            });
+        } else if alternative.contains('[')
+            || alternative.contains('+')
+            || alternative.contains(',')
+            || alternative.contains('(')
+        {
+            return Err(format!(
+                "TODO: native format selector syntax is not implemented: {alternative}"
+            ));
+        } else {
+            selected = formats.iter().find(|format| {
+                format.get("format_id").and_then(serde_json::Value::as_str) == Some(alternative)
+                    || format.get("ext").and_then(serde_json::Value::as_str) == Some(alternative)
+            });
+        }
+        if selected.is_some() {
+            break;
+        }
+    }
+    let format =
+        selected.ok_or_else(|| format!("no native format matches selector: {selector}"))?;
+    let url = format
+        .get("url")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "selected native format has no URL".to_owned())?;
+    let ext = format
+        .get("ext")
+        .and_then(serde_json::Value::as_str)
+        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str))
+        .map(str::to_owned);
+    Ok((url.to_owned(), ext))
 }
 
 fn native_postprocess_options(options: &cli::CliOptions, simulate: bool) -> PostProcessOptions {
@@ -621,6 +702,39 @@ fn download_result_json(result: &DownloadResult) -> serde_json::Value {
     })
 }
 
+fn print_info_json(info: &InfoDict) -> Result<(), String> {
+    println!(
+        "{}",
+        serde_json::to_string(info).map_err(|error| error.to_string())?
+    );
+    Ok(())
+}
+
+fn print_formats(info: &InfoDict) {
+    if let Some(formats) = info.get("formats").and_then(serde_json::Value::as_array) {
+        for format in formats {
+            let format_id = format
+                .get("format_id")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("unknown");
+            let ext = format
+                .get("ext")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("unknown");
+            let url = format
+                .get("url")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("<missing URL>");
+            println!("{format_id}\t{ext}\t{url}");
+        }
+    } else if let Some(url) = info.get_str("url") {
+        println!(
+            "direct\t{}\t{url}",
+            info.get_str("ext").unwrap_or("unknown")
+        );
+    }
+}
+
 fn native_download_argument(args: &[String]) -> Result<(), String> {
     let result = parse_configured_args(args).map_err(|error| error.to_string())?;
     let ParseResult::Options(options) = result else {
@@ -632,28 +746,32 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
     if options.batchfile.is_some() {
         return Err("--native-download does not support --batch-file yet".to_owned());
     }
-    if options.skip_download {
-        if options.dumpjson || options.dump_single_json {
-            println!("{{\"skipped\":true}}");
-        }
-        return Ok(());
-    }
-
     let url = &options.urls[0];
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
     let extractor = registry
         .find(url)
         .ok_or_else(|| format!("no extractor matched URL: {url}"))?;
-    if extractor.descriptor().key != "GenericIE" {
-        return Err(format!(
-            "TODO: native extractor {} ({}) is not implemented",
-            extractor.descriptor().key,
-            extractor.descriptor().name,
-        ));
+    let extraction_context = ExtractionContext::native();
+    let info = extractor
+        .extract_with_context(url, &extraction_context)
+        .map_err(|error| error.to_string())?
+        .into_info_dict();
+    if info.get("_type").and_then(serde_json::Value::as_str) == Some("playlist") {
+        return Err("TODO: native playlist entry selection is not implemented".to_owned());
     }
-    let info = extractor.extract(url).map_err(|error| error.to_string())?;
-    let request = options.request_for_url(url, CookieJar::new().shared());
-    let output = direct_output_path(&info, &options)?;
+    if options.dumpjson || options.dump_single_json {
+        return print_info_json(&info);
+    }
+    if options.listformats == Some(true) {
+        print_formats(&info);
+        return Ok(());
+    }
+    if options.skip_download {
+        return Ok(());
+    }
+    let (download_url, selected_ext) = select_download_format(&info, options.format.as_deref())?;
+    let request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
+    let output = direct_output_path(&info, &options, selected_ext.as_deref())?;
     let download_options = DownloadOptions {
         simulate: options.simulate == Some(true),
         overwrite: options.overwrites != Some(false),
@@ -674,9 +792,26 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
             .unwrap_or(1),
     };
     let downloader = DirectDownloader::native();
-    let result = match info.get("ext").and_then(serde_json::Value::as_str) {
+    let result = match selected_ext
+        .as_deref()
+        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str))
+    {
         Some("m3u8") => downloader.download_hls(&request, Some(&output), &download_options),
         Some("mpd") => downloader.download_dash(&request, Some(&output), &download_options),
+        _ if download_url
+            .split('?')
+            .next()
+            .is_some_and(|url| url.ends_with(".m3u8")) =>
+        {
+            downloader.download_hls(&request, Some(&output), &download_options)
+        }
+        _ if download_url
+            .split('?')
+            .next()
+            .is_some_and(|url| url.ends_with(".mpd")) =>
+        {
+            downloader.download_dash(&request, Some(&output), &download_options)
+        }
         _ => downloader.download(&request, Some(&output), &download_options),
     }
     .map_err(|error| error.to_string())?;
@@ -746,6 +881,8 @@ fn extractor_info_argument(args: &[String]) -> Result<(), String> {
         "pattern_count": extractor.pattern_count(),
         "native_matcher_count": extractor.native_matcher_count(),
         "matcher_error_count": extractor.matcher_error_count(),
+        "native": extractor.is_native(),
+        "implementation": if extractor.is_native() { "native" } else { "TODO" },
     });
     serde_json::to_writer(io::stdout(), &output).map_err(|error| error.to_string())
 }
@@ -895,10 +1032,6 @@ fn main() {
                 eprintln!("yt-dlp-rs: {error}");
                 std::process::exit(1);
             }
-        }
-        Some("--python-compat") => {
-            eprintln!("yt-dlp-rs: Python compatibility is disabled; this build is Rust-only");
-            std::process::exit(2);
         }
         _ => {
             if let Err(error) = native_download_argument(&args) {

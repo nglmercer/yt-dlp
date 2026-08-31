@@ -1587,10 +1587,12 @@ name = "yt-dlp-extractor"
 version = "0.0.0"
 dependencies = [
  "fancy-regex",
+ "regex",
  "serde",
  "serde_json",
  "url",
  "yt-dlp-core",
+ "yt-dlp-networking",
 ]
 
 [[package]]

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Run deterministic differential checks against the Rust migration binary."""
+"""Run offline differential checks against the Rust migration binary.
+
+The Python imports in this script are a development-only behavioral oracle.
+This script is never imported or invoked by the Rust product binary.
+"""
 
 from __future__ import annotations
 
@@ -241,7 +245,7 @@ def main() -> int:
         print(json.dumps(mismatches, indent=2, ensure_ascii=False), file=sys.stderr)
         return 1
 
-    print(f'PASS {args.operation}: {len(values)} Python/Rust cases match')
+    print(f'PASS {args.operation}: {len(values)} reference/Rust cases match')
     return 0
 
 

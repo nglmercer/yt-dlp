@@ -7,7 +7,9 @@ publish = false
 
 [dependencies]
 fancy-regex.workspace = true
+regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 url.workspace = true
 yt-dlp-core = { path = "../ytdlp-core" }
+yt-dlp-networking = { path = "../ytdlp-networking" }

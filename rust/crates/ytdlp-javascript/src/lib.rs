@@ -1,4 +1,4 @@
-//! JavaScript runtime adapters used by the extractor compatibility boundary.
+//! JavaScript runtime adapters used by the native extractor runtime boundary.
 //!
 //! The adapter owns executable discovery, version probing, stdin/stdout
 //! execution, and the QuickJS temporary-file difference.  Challenge-solving
