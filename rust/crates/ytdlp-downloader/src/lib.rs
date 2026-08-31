@@ -354,11 +354,18 @@ impl DirectDownloader {
             .segments
             .iter()
             .enumerate()
-            .map(|(index, segment)| {
+            .zip(playlist.segment_ranges.iter())
+            .map(|((index, segment), range)| {
                 let mut segment_request = request.clone();
                 segment_request.set_url(segment);
                 segment_request.set_data(None);
                 segment_request.set_method("GET")?;
+                if let Some(range) = range {
+                    segment_request.headers_mut().set(
+                        "Range",
+                        format!("bytes={}-{}", range.start, range.end_inclusive()?),
+                    );
+                }
                 Ok(Fragment {
                     index,
                     request: segment_request,
@@ -546,6 +553,7 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DashManifest {
     pub segments: Vec<String>,
+    pub segment_ranges: Vec<Option<ByteRange>>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -692,6 +700,52 @@ fn parse_dash_duration_seconds(value: &str) -> Option<f64> {
     yt_dlp_core::parse_duration(value)
 }
 
+fn parse_dash_byte_range(value: &str) -> Result<ByteRange, DownloadError> {
+    let (start, end) = value.trim().split_once('-').ok_or_else(|| {
+        DownloadError::InvalidPlaylist(format!("invalid DASH byte range: {value}"))
+    })?;
+    let start = start.parse::<u64>().map_err(|_| {
+        DownloadError::InvalidPlaylist(format!("invalid DASH byte range start: {value}"))
+    })?;
+    let end = end.parse::<u64>().map_err(|_| {
+        DownloadError::InvalidPlaylist(format!("invalid DASH byte range end: {value}"))
+    })?;
+    let length = end
+        .checked_sub(start)
+        .and_then(|length| length.checked_add(1))
+        .ok_or_else(|| {
+            DownloadError::InvalidPlaylist(format!("invalid DASH byte range bounds: {value}"))
+        })?;
+    Ok(ByteRange { start, length })
+}
+
+fn append_dash_segment(
+    segments: &mut Vec<String>,
+    segment_ranges: &mut Vec<Option<ByteRange>>,
+    base: &Url,
+    media: &str,
+    range: Option<&str>,
+) -> Result<(), DownloadError> {
+    segments.push(resolve_url(base, media)?);
+    segment_ranges.push(range.map(parse_dash_byte_range).transpose()?);
+    Ok(())
+}
+
+fn insert_dash_initialization(
+    segments: &mut Vec<String>,
+    segment_ranges: &mut Vec<Option<ByteRange>>,
+    base: &Url,
+    source: &str,
+    range: Option<&str>,
+) -> Result<(), DownloadError> {
+    let url = resolve_url(base, source)?;
+    if !segments.contains(&url) {
+        segments.insert(0, url);
+        segment_ranges.insert(0, range.map(parse_dash_byte_range).transpose()?);
+    }
+    Ok(())
+}
+
 fn expand_dash_template_segments(
     template: DashSegmentTemplate,
     presentation_duration: Option<f64>,
@@ -790,6 +844,7 @@ pub fn parse_dash_mpd(base_url: &str, body: &[u8]) -> Result<DashManifest, Downl
     let mut bases = vec![root.clone()];
     let mut base_text = None;
     let mut segments = Vec::new();
+    let mut segment_ranges = Vec::new();
     let mut template: Option<DashSegmentTemplate> = None;
     let mut representation_id = String::new();
     let mut presentation_duration = None;
@@ -816,25 +871,26 @@ pub fn parse_dash_mpd(base_url: &str, body: &[u8]) -> Result<DashManifest, Downl
                         }
                     }
                 } else if name == "SegmentURL" {
-                    if xml_attribute(&start, b"mediaRange").is_some() {
-                        return Err(DownloadError::Unsupported(
-                            "DASH byte ranges are not implemented".to_owned(),
-                        ));
-                    }
+                    let media_range = xml_attribute(&start, b"mediaRange");
                     if let Some(media) = xml_attribute(&start, b"media") {
-                        segments.push(resolve_url(bases.last().unwrap(), &media)?);
+                        append_dash_segment(
+                            &mut segments,
+                            &mut segment_ranges,
+                            bases.last().unwrap(),
+                            &media,
+                            media_range.as_deref(),
+                        )?;
                     }
                 } else if name == "Initialization" {
-                    if xml_attribute(&start, b"range").is_some() {
-                        return Err(DownloadError::Unsupported(
-                            "DASH byte ranges are not implemented".to_owned(),
-                        ));
-                    }
+                    let initialization_range = xml_attribute(&start, b"range");
                     if let Some(source) = xml_attribute(&start, b"sourceURL") {
-                        let url = resolve_url(bases.last().unwrap(), &source)?;
-                        if !segments.contains(&url) {
-                            segments.insert(0, url);
-                        }
+                        insert_dash_initialization(
+                            &mut segments,
+                            &mut segment_ranges,
+                            bases.last().unwrap(),
+                            &source,
+                            initialization_range.as_deref(),
+                        )?;
                     }
                 } else if name == "SegmentTemplate" {
                     template = Some(dash_template_from_attributes(
@@ -854,25 +910,26 @@ pub fn parse_dash_mpd(base_url: &str, body: &[u8]) -> Result<DashManifest, Downl
                 let name = xml_local_name(empty.name().as_ref());
                 let base = bases.last().cloned().unwrap_or_else(|| root.clone());
                 if name == "SegmentURL" {
-                    if xml_attribute(&empty, b"mediaRange").is_some() {
-                        return Err(DownloadError::Unsupported(
-                            "DASH byte ranges are not implemented".to_owned(),
-                        ));
-                    }
+                    let media_range = xml_attribute(&empty, b"mediaRange");
                     if let Some(media) = xml_attribute(&empty, b"media") {
-                        segments.push(resolve_url(&base, &media)?);
+                        append_dash_segment(
+                            &mut segments,
+                            &mut segment_ranges,
+                            &base,
+                            &media,
+                            media_range.as_deref(),
+                        )?;
                     }
                 } else if name == "Initialization" {
-                    if xml_attribute(&empty, b"range").is_some() {
-                        return Err(DownloadError::Unsupported(
-                            "DASH byte ranges are not implemented".to_owned(),
-                        ));
-                    }
+                    let initialization_range = xml_attribute(&empty, b"range");
                     if let Some(source) = xml_attribute(&empty, b"sourceURL") {
-                        let url = resolve_url(&base, &source)?;
-                        if !segments.contains(&url) {
-                            segments.insert(0, url);
-                        }
+                        insert_dash_initialization(
+                            &mut segments,
+                            &mut segment_ranges,
+                            &base,
+                            &source,
+                            initialization_range.as_deref(),
+                        )?;
                     }
                 } else if name == "SegmentTemplate" {
                     template = Some(dash_template_from_attributes(
@@ -916,6 +973,7 @@ pub fn parse_dash_mpd(base_url: &str, body: &[u8]) -> Result<DashManifest, Downl
     if segments.is_empty() {
         if let Some(template) = template {
             segments = expand_dash_template_segments(template, presentation_duration)?;
+            segment_ranges = vec![None; segments.len()];
         }
     }
     if segments.is_empty() {
@@ -923,7 +981,10 @@ pub fn parse_dash_mpd(base_url: &str, body: &[u8]) -> Result<DashManifest, Downl
             "MPD contains no media segments".to_owned(),
         ));
     }
-    Ok(DashManifest { segments })
+    Ok(DashManifest {
+        segments,
+        segment_ranges,
+    })
 }
 
 fn write_atomic(path: &Path, body: &[u8], overwrite: bool) -> Result<PathBuf, DownloadError> {
@@ -1138,6 +1199,36 @@ mod tests {
                 "http://example.test/manifests/video/init.mp4",
                 "http://example.test/manifests/video/one.m4s",
                 "http://example.test/manifests/video/two.m4s",
+            ]
+        );
+        assert_eq!(manifest.segment_ranges, [None, None, None]);
+
+        let ranges = parse_dash_mpd(
+            "http://example.test/manifests/ranges.mpd",
+            br#"<MPD><Period><Representation><BaseURL>video/</BaseURL>
+                <SegmentList>
+                    <Initialization sourceURL="media.mp4" range="0-3" />
+                    <SegmentURL media="media.mp4" mediaRange="4-6" />
+                    <SegmentURL media="media.mp4" mediaRange="7-8" />
+                </SegmentList>
+            </Representation></Period></MPD>"#,
+        )
+        .unwrap();
+        assert_eq!(
+            ranges.segment_ranges,
+            [
+                Some(ByteRange {
+                    start: 0,
+                    length: 4
+                }),
+                Some(ByteRange {
+                    start: 4,
+                    length: 3
+                }),
+                Some(ByteRange {
+                    start: 7,
+                    length: 2
+                }),
             ]
         );
 
@@ -1357,6 +1448,89 @@ mod tests {
         assert_eq!(fs::read(&output).unwrap(), b"INITONETWO");
         fs::remove_file(output).unwrap();
         server.join().unwrap();
+    }
+
+    #[test]
+    fn dash_downloader_sends_byte_ranges_for_segment_list() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let mut requests = Vec::new();
+            for _ in 0..4 {
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut request = [0; 2048];
+                let count = std::io::Read::read(&mut stream, &mut request).unwrap();
+                let request = String::from_utf8_lossy(&request[..count]).into_owned();
+                let path = request
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap_or_default()
+                    .to_owned();
+                let range = request
+                    .lines()
+                    .find(|line| line.starts_with("Range:"))
+                    .map(str::to_owned);
+                requests.push(request);
+                let (status, body) = match (path.as_str(), range.as_deref()) {
+                    ("/main.mpd", None) => (
+                        "200 OK",
+                        br#"<MPD><Period><Representation><BaseURL>video/</BaseURL>
+                            <SegmentList>
+                                <Initialization sourceURL="media.mp4" range="0-3" />
+                                <SegmentURL media="media.mp4" mediaRange="4-6" />
+                                <SegmentURL media="media.mp4" mediaRange="7-8" />
+                            </SegmentList>
+                        </Representation></Period></MPD>"#
+                            .to_vec(),
+                    ),
+                    ("/video/media.mp4", Some("Range: bytes=0-3")) => {
+                        ("206 Partial Content", b"INIT".to_vec())
+                    }
+                    ("/video/media.mp4", Some("Range: bytes=4-6")) => {
+                        ("206 Partial Content", b"abc".to_vec())
+                    }
+                    ("/video/media.mp4", Some("Range: bytes=7-8")) => {
+                        ("206 Partial Content", b"de".to_vec())
+                    }
+                    _ => ("416 Range Not Satisfiable", Vec::new()),
+                };
+                let response = format!(
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                );
+                stream.write_all(response.as_bytes()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+            requests
+        });
+
+        let output = std::env::temp_dir().join(format!(
+            "yt-dlp-rs-dash-range-{}-{}.mp4",
+            std::process::id(),
+            address.port()
+        ));
+        let result = DirectDownloader::native()
+            .download_dash(
+                &Request::new(format!("http://{address}/main.mpd")),
+                Some(&output),
+                &DownloadOptions {
+                    simulate: false,
+                    overwrite: true,
+                    resume: false,
+                    retries: 0,
+                    concurrent: 1,
+                },
+            )
+            .unwrap();
+
+        let requests = server.join().unwrap();
+        assert!(requests[1].contains("Range: bytes=0-3\r\n"));
+        assert!(requests[2].contains("Range: bytes=4-6\r\n"));
+        assert!(requests[3].contains("Range: bytes=7-8\r\n"));
+        assert_eq!(result.fragments, Some(3));
+        assert_eq!(result.bytes, 9);
+        assert_eq!(fs::read(&output).unwrap(), b"INITabcde");
+        fs::remove_file(output).unwrap();
     }
 
     #[test]

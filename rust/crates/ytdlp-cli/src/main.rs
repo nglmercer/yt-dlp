@@ -357,7 +357,15 @@ fn downloader_manifests(input: serde_json::Value) -> Result<serde_json::Value, S
         "dash" => {
             let manifest =
                 parse_dash_mpd(base_url, body.as_bytes()).map_err(|error| error.to_string())?;
-            Ok(serde_json::json!({"segments": manifest.segments}))
+            Ok(serde_json::json!({
+                "segments": manifest.segments,
+                "segment_ranges": manifest.segment_ranges.iter().map(|range| {
+                    range.as_ref().map(|range| serde_json::json!({
+                        "start": range.start,
+                        "length": range.length,
+                    }))
+                }).collect::<Vec<_>>(),
+            }))
         }
         _ => Err(format!("unsupported downloader manifest kind: {kind}")),
     }

@@ -90,7 +90,7 @@ def _dash_replace(template: str, number: int, time: int, representation_id: str)
     return template
 
 
-def _reference_dash_segments(base_url: str, body: str) -> list[str]:
+def _reference_dash_segments(base_url: str, body: str) -> dict[str, object]:
     root = ET.fromstring(body)
     mpd_duration = root.attrib.get('mediaPresentationDuration')
     duration_match = re.fullmatch(r'PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?', mpd_duration or '')
@@ -100,15 +100,33 @@ def _reference_dash_segments(base_url: str, body: str) -> list[str]:
         presentation_duration = hours * 3600 + minutes * 60 + seconds
 
     segments: list[str] = []
+    segment_ranges: list[dict[str, int] | None] = []
+
+    def parse_byte_range(value: str) -> dict[str, int]:
+        start, end = (int(part) for part in value.split('-', 1))
+        if end < start:
+            raise ValueError(f'invalid DASH byte range: {value}')
+        return {'start': start, 'length': end - start + 1}
 
     def walk(element: ET.Element, current_base: str, representation_id: str = '') -> None:
         local = _xml_local_name(element.tag)
         if local == 'Representation':
             representation_id = element.attrib.get('id', representation_id)
         if local == 'Initialization' and element.attrib.get('sourceURL'):
-            segments.insert(0, urllib.parse.urljoin(current_base, element.attrib['sourceURL']))
+            url = urllib.parse.urljoin(current_base, element.attrib['sourceURL'])
+            if url not in segments:
+                segments.insert(0, url)
+                segment_ranges.insert(
+                    0,
+                    parse_byte_range(element.attrib['range'])
+                    if element.attrib.get('range') else None,
+                )
         if local == 'SegmentURL' and element.attrib.get('media'):
             segments.append(urllib.parse.urljoin(current_base, element.attrib['media']))
+            segment_ranges.append(
+                parse_byte_range(element.attrib['mediaRange'])
+                if element.attrib.get('mediaRange') else None,
+            )
         if local == 'SegmentTemplate':
             media = element.attrib.get('media')
             if not media:
@@ -121,6 +139,7 @@ def _reference_dash_segments(base_url: str, body: str) -> list[str]:
                     current_base,
                     _dash_replace(initialization, start_number, 0, representation_id),
                 ))
+                segment_ranges.append(None)
             timeline = [
                 child for child in element.iter()
                 if _xml_local_name(child.tag) == 'S'
@@ -148,6 +167,7 @@ def _reference_dash_segments(base_url: str, body: str) -> list[str]:
                             current_base,
                             _dash_replace(media, number, current_time, representation_id),
                         ))
+                        segment_ranges.append(None)
                         number += 1
                         current_time += entry_duration
             elif element.attrib.get('duration') and presentation_duration:
@@ -158,6 +178,7 @@ def _reference_dash_segments(base_url: str, body: str) -> list[str]:
                         current_base,
                         _dash_replace(media, start_number + index, index * entry_duration, representation_id),
                     ))
+                    segment_ranges.append(None)
             return
         child_base = current_base
         for child in element:
@@ -169,7 +190,7 @@ def _reference_dash_segments(base_url: str, body: str) -> list[str]:
             walk(child, child_base, representation_id)
 
     walk(root, base_url)
-    return segments
+    return {'segments': segments, 'segment_ranges': segment_ranges}
 
 
 def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
@@ -234,7 +255,7 @@ def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
             'segment_ranges': segment_ranges,
         }
     if case['kind'] == 'dash':
-        return {'segments': _reference_dash_segments(base_url, body)}
+        return _reference_dash_segments(base_url, body)
     raise ValueError(f'unknown downloader fixture kind: {case["kind"]}')
 
 

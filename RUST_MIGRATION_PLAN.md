@@ -172,6 +172,7 @@ self-update behavior.
 - [x] native HLS media-playlist parsing, segment concatenation, and retries
 - [x] native HLS byte-range parsing and Range requests
 - [x] native DASH SegmentList parsing and concatenation
+- [x] native DASH SegmentList byte-range parsing and Range requests
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
 - [x] bounded concurrent fragment assembly with ordered output and retries
 - [x] direct-resource resume using HTTP Range and partial-file reconciliation
