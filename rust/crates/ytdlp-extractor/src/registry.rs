@@ -179,6 +179,8 @@ impl ExtractorRegistry {
                 registry.register(GlideExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbayIE" {
                 registry.register(EbayExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "SenIE" {
+                registry.register(SenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
                 registry.register(EbaumsWorldExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FuyinTVIE" {

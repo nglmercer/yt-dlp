@@ -210,6 +210,7 @@ self-update behavior.
 - [x] native MyVidster videolink redirect extractor
 - [x] native Glide HTML5 video-message extractor
 - [x] native eBay embedded HLS/DASH extractor
+- [x] native Sen API/HLS extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
