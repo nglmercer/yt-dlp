@@ -232,7 +232,8 @@ fn native_download_info(
         .as_deref()
         .or(options.extractaudio.then_some("bestaudio"));
     let (download_url, selected_ext) = select_download_format(&info, selector)?;
-    let request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
+    let mut request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
+    native_apply_info_http_headers(&mut request, info)?;
     let output = direct_output_path(info, options, selected_ext.as_deref())?;
     let requested_fields = print_requested_fields(info, options, &download_url);
     let info_path = if options.writeinfojson == Some(true) {
@@ -364,6 +365,26 @@ fn native_download_info(
     }
     if let Some(info_path) = info_path {
         eprintln!("[info] {}", info_path.display());
+    }
+    Ok(())
+}
+
+fn native_apply_info_http_headers(request: &mut Request, info: &InfoDict) -> Result<(), String> {
+    let Some(headers) = info.get("http_headers") else {
+        return Ok(());
+    };
+    let Some(headers) = headers.as_object() else {
+        return Err("TODO: native downloader requires http_headers to be an object".to_owned());
+    };
+    for (name, value) in headers {
+        let Some(value) = value.as_str() else {
+            return Err(format!(
+                "TODO: native downloader requires string http_headers values for {name}"
+            ));
+        };
+        if !request.headers().contains(name) {
+            request.headers_mut().set(name, value);
+        }
     }
     Ok(())
 }

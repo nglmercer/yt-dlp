@@ -15,4 +15,5 @@ include!("video_services_parts/charlierose.rs");
 include!("video_services_parts/eltrecetv.rs");
 include!("video_services_parts/canalc2.rs");
 include!("video_services_parts/epoch.rs");
+include!("video_services_parts/harpodeon.rs");
 include!("video_services_parts/fathom.rs");

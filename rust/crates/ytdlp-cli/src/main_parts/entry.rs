@@ -75,6 +75,7 @@ fn main() {
 #[cfg(test)]
 mod native_tests {
     use super::*;
+    use yt_dlp_extractor::{ExtractorDescriptor, GenericExtractor};
 
     fn sample_info() -> InfoDict {
         let mut info = InfoDict::new();
@@ -230,5 +231,31 @@ mod native_tests {
         assert_eq!(resolved.get_str("url"), Some("https://cdn.test/episode.mp4"));
         assert_eq!(resolved.get_str("ext"), Some("mp4"));
         assert_eq!(resolved.get("direct"), Some(&serde_json::json!(true)));
+    }
+
+    #[test]
+    fn native_info_http_headers_fill_request_without_overwriting_cli_headers() {
+        let mut options = cli::CliOptions::default();
+        options.referer = Some("https://cli.example/override".to_owned());
+        let mut request = options.request_for_url(
+            "https://cdn.example/video.mp4",
+            CookieJar::new().shared(),
+        );
+        let mut info = InfoDict::new();
+        info.insert(
+            "http_headers",
+            serde_json::json!({
+                "Referer": "https://extractor.example/page",
+                "X-Extractor": "native",
+            }),
+        );
+
+        native_apply_info_http_headers(&mut request, &info).unwrap();
+
+        assert_eq!(
+            request.headers().get("Referer"),
+            Some("https://cli.example/override")
+        );
+        assert_eq!(request.headers().get("X-Extractor"), Some("native"));
     }
 }

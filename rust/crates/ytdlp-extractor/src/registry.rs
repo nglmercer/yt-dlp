@@ -113,6 +113,8 @@ impl ExtractorRegistry {
                 registry.register(Canalc2Extractor::new(descriptor)?)?;
             } else if descriptor.key == "EpochIE" {
                 registry.register(EpochExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HarpodeonIE" {
+                registry.register(HarpodeonExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {

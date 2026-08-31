@@ -10,9 +10,7 @@ use yt_dlp_core::{format_bytes, render_output_template};
 use yt_dlp_downloader::{
     DirectDownloader, DownloadOptions, DownloadResult, parse_dash_mpd, parse_hls_playlist,
 };
-use yt_dlp_extractor::{
-    ExtractionContext, ExtractorDescriptor, ExtractorRegistry, ExtractorResult, GenericExtractor,
-};
+use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry, ExtractorResult};
 use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
 use yt_dlp_postprocessor::{
