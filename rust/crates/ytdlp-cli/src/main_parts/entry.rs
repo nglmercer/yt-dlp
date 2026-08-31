@@ -114,6 +114,37 @@ mod native_tests {
     }
 
     #[test]
+    fn native_downloader_marks_unimplemented_protocols_as_todo() {
+        let rtmp_error =
+            native_protocol_todo("rtmp://media.test/live/stream", Some("flv"), None);
+        assert!(rtmp_error
+            .as_deref()
+            .is_some_and(|error| error.starts_with("TODO:")));
+
+        let hds_error = native_protocol_todo("https://media.test/video.f4m", None, None);
+        assert!(hds_error
+            .as_deref()
+            .is_some_and(|error| error.contains("Adobe HDS/F4M")));
+
+        let smooth_error =
+            native_protocol_todo("https://media.test/video.ism/Manifest", None, None);
+        assert!(smooth_error
+            .as_deref()
+            .is_some_and(|error| error.contains("Microsoft Smooth Streaming")));
+
+        let declared_hds =
+            native_protocol_todo("https://media.test/manifest", Some("mp4"), Some("hds"));
+        assert!(declared_hds
+            .as_deref()
+            .is_some_and(|error| error.contains("Adobe HDS/F4M")));
+
+        assert!(
+            native_protocol_todo("https://media.test/video.mp4", Some("mp4"), None).is_none()
+        );
+        assert!(native_protocol_todo("https://media.test/video.m3u8", None, None).is_none());
+    }
+
+    #[test]
     fn native_input_urls_combines_command_line_and_batch_file_entries() {
         let path = std::env::temp_dir().join(format!(
             "yt-dlp-rs-batch-{}-{}.txt",

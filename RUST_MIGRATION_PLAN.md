@@ -174,6 +174,7 @@ self-update behavior.
 - [x] native HLS byte-range parsing and Range requests
 - [x] native DASH SegmentList parsing and concatenation
 - [x] native DASH SegmentList byte-range parsing and Range requests
+- [x] explicit Rust TODO guards for unsupported HDS/F4M, MSS, RTMP, and legacy transports
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
 - [x] bounded concurrent fragment assembly with ordered output and retries
 - [x] direct-resource resume using HTTP Range and partial-file reconciliation

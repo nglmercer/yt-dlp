@@ -182,6 +182,23 @@ fn native_download_info(
         }
         return Ok(());
     }
+    let declared_ext = selected_ext
+        .as_deref()
+        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str));
+    let declared_protocol = info
+        .get("protocol")
+        .and_then(serde_json::Value::as_str)
+        .or_else(|| {
+            format_records(info).into_iter().find_map(|format| {
+                (format.get("url").and_then(serde_json::Value::as_str)
+                    == Some(download_url.as_str()))
+                .then(|| format.get("protocol").and_then(serde_json::Value::as_str))
+                .flatten()
+            })
+        });
+    if let Some(todo) = native_protocol_todo(&download_url, declared_ext, declared_protocol) {
+        return Err(todo);
+    }
     if archive.contains_info(info, fallback_extractor) {
         if !options.quiet.unwrap_or(false) {
             eprintln!(
@@ -213,24 +230,13 @@ fn native_download_info(
             .unwrap_or(1),
     };
     let downloader = DirectDownloader::native();
-    let result = match selected_ext
-        .as_deref()
-        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str))
-    {
+    let result = match declared_ext {
         Some("m3u8") => downloader.download_hls(&request, Some(&output), &download_options),
         Some("mpd") => downloader.download_dash(&request, Some(&output), &download_options),
-        _ if download_url
-            .split('?')
-            .next()
-            .is_some_and(|url| url.ends_with(".m3u8")) =>
-        {
+        _ if native_url_ends_with(&download_url, ".m3u8") => {
             downloader.download_hls(&request, Some(&output), &download_options)
         }
-        _ if download_url
-            .split('?')
-            .next()
-            .is_some_and(|url| url.ends_with(".mpd")) =>
-        {
+        _ if native_url_ends_with(&download_url, ".mpd") => {
             downloader.download_dash(&request, Some(&output), &download_options)
         }
         _ => downloader.download(&request, Some(&output), &download_options),
@@ -290,4 +296,59 @@ fn native_download_info(
         eprintln!("[info] {}", info_path.display());
     }
     Ok(())
+}
+
+fn native_protocol_todo(
+    url: &str,
+    extension: Option<&str>,
+    protocol: Option<&str>,
+) -> Option<String> {
+    let scheme = url
+        .split_once(':')
+        .map(|(scheme, _)| scheme.to_ascii_lowercase())
+        .unwrap_or_default();
+    let lower_url = url.to_ascii_lowercase();
+    let inferred_extension = yt_dlp_core::determine_ext(Some(url), "");
+    let extension = extension
+        .map(str::to_ascii_lowercase)
+        .or_else(|| (!inferred_extension.is_empty()).then(|| inferred_extension.to_ascii_lowercase()));
+
+    let reason = match scheme.as_str() {
+        "rtmp" | "rtmps" | "rtmpe" | "rtmpt" | "rtmpte" => Some("RTMP"),
+        "mms" | "mmsh" | "rtsp" => Some("legacy streaming transport"),
+        "ftp" | "sftp" => Some("non-HTTP transport"),
+        _ if lower_url.contains(".ism/manifest") || lower_url.contains(".isml/manifest") => {
+            Some("Microsoft Smooth Streaming")
+        }
+        _ if protocol.is_some_and(|protocol| {
+            matches!(
+                protocol.to_ascii_lowercase().as_str(),
+                "f4m" | "hds" | "ism" | "isml" | "mss" | "rtmp" | "rtmps"
+            )
+        }) => protocol.and_then(|protocol| match protocol.to_ascii_lowercase().as_str() {
+            "f4m" | "hds" => Some("Adobe HDS/F4M"),
+            "ism" | "isml" | "mss" => Some("Microsoft Smooth Streaming"),
+            "rtmp" | "rtmps" => Some("RTMP"),
+            _ => None,
+        }),
+        _ => match extension.as_deref() {
+            Some("f4m" | "f4f") => Some("Adobe HDS/F4M"),
+            Some("ism" | "isml" | "mss") => Some("Microsoft Smooth Streaming"),
+            _ if !scheme.is_empty() && !matches!(scheme.as_str(), "http" | "https") => {
+                Some("unsupported URL scheme")
+            }
+            _ => None,
+        },
+    }?;
+
+    Some(format!(
+        "TODO: native downloader does not implement {reason} media for {url}"
+    ))
+}
+
+fn native_url_ends_with(url: &str, suffix: &str) -> bool {
+    url.split('?')
+        .next()
+        .map(|url| url.to_ascii_lowercase().ends_with(suffix))
+        .unwrap_or(false)
 }
