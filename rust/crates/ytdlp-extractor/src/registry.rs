@@ -93,6 +93,8 @@ impl ExtractorRegistry {
                 registry.register(BongaCamsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BTVPlusIE" {
                 registry.register(BtvPlusExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "BoxCastVideoIE" {
+                registry.register(BoxCastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

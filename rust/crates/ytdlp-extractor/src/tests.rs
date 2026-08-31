@@ -44,4 +44,5 @@ include!("tests_parts/harpodeon.rs");
 include!("tests_parts/altcensored.rs");
 include!("tests_parts/bongacams.rs");
 include!("tests_parts/btvplus.rs");
+include!("tests_parts/boxcast.rs");
 include!("tests_parts/fathom.rs");
