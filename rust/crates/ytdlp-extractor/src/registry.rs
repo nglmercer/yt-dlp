@@ -89,6 +89,8 @@ impl ExtractorRegistry {
                 registry.register(AltCensoredExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AltCensoredChannelIE" {
                 registry.register(AltCensoredChannelExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "BongaCamsIE" {
+                registry.register(BongaCamsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

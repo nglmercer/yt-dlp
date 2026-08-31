@@ -150,6 +150,7 @@ self-update behavior.
 - [x] native extractor context with shared Rust request/cookie state
 - [x] native Archive.org metadata/file and playlist-result extractor
 - [x] native AltCensored Archive.org transparent video and channel playlist extractors
+- [x] native BongaCams room API/live HLS extractor
 - [x] native AudioBoom embedded clip-store/audio extractor
 - [x] native Bandcamp track JSON/audio extractor
 - [x] native BannedVideo GraphQL metadata/media/comment extractor
