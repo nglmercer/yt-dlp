@@ -91,6 +91,8 @@ impl ExtractorRegistry {
                 registry.register(AltCensoredChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BongaCamsIE" {
                 registry.register(BongaCamsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "BTVPlusIE" {
+                registry.register(BtvPlusExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
