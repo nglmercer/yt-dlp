@@ -229,6 +229,7 @@ self-update behavior.
 - [x] native Newsy page-data/HLS extractor
 - [x] native Clubic M6Web player-configuration extractor
 - [x] native münchen.tv live playlist extractor with SMIL TODO guard
+- [x] native VOD Platform hidden-input HLS/DASH extractor with Wowza TODO guard
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor

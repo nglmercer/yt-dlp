@@ -216,6 +216,28 @@ fn html_data_json_attribute(html: &str, attribute: &str) -> Option<serde_json::V
     None
 }
 
+fn html_named_input_value(html: &str, name: &str) -> Option<String> {
+    let name = regex::escape(name);
+    let patterns = [
+        format!(
+            r#"(?is)<input\b[^>]*\bname\s*=\s*["']{name}["'][^>]*\bvalue\s*=\s*["']([^"']*)"#,
+        ),
+        format!(
+            r#"(?is)<input\b[^>]*\bvalue\s*=\s*["']([^"']*)["'][^>]*\bname\s*=\s*["']{name}["']"#,
+        ),
+    ];
+    patterns.iter().find_map(|pattern| {
+        Regex::new(pattern)
+            .ok()
+            .and_then(|matcher| matcher.captures(html).ok().flatten())
+            .and_then(|captures| {
+                captures
+                    .get(1)
+                    .map(|value| unescape_html_attribute(value.as_str()))
+            })
+    })
+}
+
 fn audio_boom_clip_store(html: &str) -> Option<serde_json::Value> {
     for pattern in [
         r#"(?is)data-react-class\s*=\s*["']V5DetailPagePlayer["'][^>]*data-react-props\s*=\s*["']([^"']*)"#,
