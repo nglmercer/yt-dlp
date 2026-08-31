@@ -8,6 +8,7 @@ use indexmap::IndexMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fmt;
 use std::sync::LazyLock;
 
 pub const MIGRATION_VERSION: &str = "0.0.0";
@@ -15,6 +16,9 @@ pub const MIGRATION_VERSION: &str = "0.0.0";
 const BYTE_SUFFIXES: [&str; 9] = ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi"];
 static PARSE_BYTES_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?P<num>\d+(?:\.\d+)?)\s*(?P<unit>[KMGTPEZY]?)$").unwrap());
+static OUTPUT_TEMPLATE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"%\((?P<key>[^)]+)\)(?P<format>[#0\-+ ]?\d*(?:\.\d+)?[sdif])").unwrap()
+});
 static DURATION_CLOCK_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"^(?:(?:(?P<days>\d+):)?(?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d{1,2})(?P<ms>[.:]\d+)?Z?$",
@@ -44,6 +48,8 @@ static DURATION_TEXT_RE: LazyLock<Regex> = LazyLock::new(|| {
     )
     .unwrap()
 });
+static URL_SCHEME_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[A-Za-z][A-Za-z0-9+.-]*:").unwrap());
 
 /// Backend used for a capability while the migration is in progress.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,6 +87,15 @@ impl InfoDict {
         self.0.insert(key.into(), value)
     }
 
+    pub fn insert_if_some<T>(&mut self, key: impl Into<String>, value: Option<T>)
+    where
+        T: Serialize,
+    {
+        if let Some(value) = value {
+            self.insert(key, serde_json::to_value(value).unwrap_or(Value::Null));
+        }
+    }
+
     pub fn contains_key(&self, key: &str) -> bool {
         self.0.contains_key(key)
     }
@@ -93,6 +108,34 @@ impl InfoDict {
         self.0.len()
     }
 
+    pub fn remove(&mut self, key: &str) -> Option<Value> {
+        self.0.shift_remove(key)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &Value)> {
+        self.0.iter().map(|(key, value)| (key.as_str(), value))
+    }
+
+    pub fn get_str(&self, key: &str) -> Option<&str> {
+        self.get(key).and_then(Value::as_str)
+    }
+
+    pub fn get_i64(&self, key: &str) -> Option<i64> {
+        self.get(key).and_then(|value| {
+            value
+                .as_i64()
+                .or_else(|| value.as_u64().and_then(|value| i64::try_from(value).ok()))
+        })
+    }
+
+    pub fn get_f64(&self, key: &str) -> Option<f64> {
+        self.get(key).and_then(Value::as_f64)
+    }
+
+    pub fn get_bool(&self, key: &str) -> Option<bool> {
+        self.get(key).and_then(Value::as_bool)
+    }
+
     pub fn as_map(&self) -> &IndexMap<String, Value> {
         &self.0
     }
@@ -100,6 +143,132 @@ impl InfoDict {
     pub fn into_map(self) -> IndexMap<String, Value> {
         self.0
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CoreErrorKind {
+    InvalidInput,
+    Unsupported,
+    MissingField,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CoreError {
+    pub kind: CoreErrorKind,
+    pub message: String,
+}
+
+impl CoreError {
+    pub fn new(kind: CoreErrorKind, message: impl Into<String>) -> Self {
+        Self {
+            kind,
+            message: message.into(),
+        }
+    }
+}
+
+impl fmt::Display for CoreError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.message.fmt(formatter)
+    }
+}
+
+impl std::error::Error for CoreError {}
+
+fn render_template_value(value: &Value, format_spec: &str) -> Result<String, CoreError> {
+    let conversion = format_spec.chars().last().ok_or_else(|| {
+        CoreError::new(CoreErrorKind::InvalidInput, "empty output template format")
+    })?;
+    let modifiers = &format_spec[..format_spec.len() - conversion.len_utf8()];
+    let zero_padded = modifiers.contains('0');
+    let width = modifiers
+        .trim_start_matches(['#', '0', '-', '+', ' '])
+        .split_once('.')
+        .map_or(
+            modifiers.trim_start_matches(['#', '0', '-', '+', ' ']),
+            |(width, _)| width,
+        )
+        .parse::<usize>()
+        .unwrap_or(0);
+    let precision = modifiers
+        .split_once('.')
+        .and_then(|(_, precision)| precision.parse::<usize>().ok());
+    let rendered = match conversion {
+        's' => match value {
+            Value::String(value) => value.clone(),
+            Value::Null => String::new(),
+            value => value.to_string(),
+        },
+        'd' | 'i' => {
+            let integer = value
+                .as_i64()
+                .or_else(|| value.as_u64().and_then(|value| i64::try_from(value).ok()))
+                .or_else(|| value.as_f64().map(|value| value as i64))
+                .or_else(|| value.as_str().and_then(|value| value.parse().ok()))
+                .ok_or_else(|| {
+                    CoreError::new(
+                        CoreErrorKind::InvalidInput,
+                        format!("value {value} is not an integer"),
+                    )
+                })?;
+            integer.to_string()
+        }
+        'f' => {
+            let number = value
+                .as_f64()
+                .or_else(|| value.as_str().and_then(|value| value.parse().ok()))
+                .ok_or_else(|| {
+                    CoreError::new(
+                        CoreErrorKind::InvalidInput,
+                        format!("value {value} is not a number"),
+                    )
+                })?;
+            precision.map_or_else(
+                || number.to_string(),
+                |precision| format!("{number:.precision$}"),
+            )
+        }
+        _ => {
+            return Err(CoreError::new(
+                CoreErrorKind::InvalidInput,
+                format!("unsupported output template format: {format_spec}"),
+            ));
+        }
+    };
+    if width <= rendered.len() {
+        return Ok(rendered);
+    }
+    let padding = width - rendered.len();
+    if zero_padded && conversion != 's' {
+        Ok(format!("{}{}", "0".repeat(padding), rendered))
+    } else {
+        Ok(format!("{}{}", " ".repeat(padding), rendered))
+    }
+}
+
+/// Render the initial Python-style output-template subset used by the native
+/// downloader. Unknown fields and unsupported conversions fail explicitly.
+pub fn render_output_template(template: &str, info: &InfoDict) -> Result<String, CoreError> {
+    let mut output = String::new();
+    let mut end = 0;
+    for captures in OUTPUT_TEMPLATE_RE.captures_iter(template) {
+        let whole = captures.get(0).expect("regex capture 0");
+        output.push_str(&template[end..whole.start()]);
+        let key = captures.name("key").expect("output key").as_str();
+        let value = info.get(key).ok_or_else(|| {
+            CoreError::new(
+                CoreErrorKind::MissingField,
+                format!("output template field is missing: {key}"),
+            )
+        })?;
+        output.push_str(&render_template_value(
+            value,
+            captures.name("format").expect("output format").as_str(),
+        )?);
+        end = whole.end();
+    }
+    output.push_str(&template[end..]);
+    Ok(output.replace("%%", "%"))
 }
 
 /// Format a byte count using yt-dlp's binary suffixes.
@@ -203,6 +372,153 @@ pub fn parse_duration(input: &str) -> Option<f64> {
     None
 }
 
+/// Determine a URL's extension using the same conservative rules as
+/// yt-dlp's utility function. Query strings are excluded, while a trailing
+/// slash is accepted for known extension values such as `mp4/`.
+pub fn determine_ext(url: Option<&str>, default_ext: &str) -> String {
+    let Some(url) = url else {
+        return default_ext.to_owned();
+    };
+    let path = url.split_once('?').map_or(url, |(path, _)| path);
+    let Some((_, guess)) = path.rsplit_once('.') else {
+        return default_ext.to_owned();
+    };
+    if !guess.is_empty() && guess.bytes().all(|byte| byte.is_ascii_alphanumeric()) {
+        return guess.to_owned();
+    }
+    let trimmed = guess.trim_end_matches('/');
+    if !trimmed.is_empty()
+        && matches!(
+            trimmed.to_ascii_lowercase().as_str(),
+            "3gp"
+                | "aac"
+                | "ass"
+                | "avi"
+                | "flac"
+                | "flv"
+                | "m4a"
+                | "m4v"
+                | "mkv"
+                | "mov"
+                | "m3u8"
+                | "mp3"
+                | "mp4"
+                | "mpeg"
+                | "mpg"
+                | "oga"
+                | "ogg"
+                | "opus"
+                | "srt"
+                | "ssa"
+                | "ts"
+                | "vtt"
+                | "wav"
+                | "webm"
+                | "webp"
+        )
+    {
+        return trimmed.to_owned();
+    }
+    default_ext.to_owned()
+}
+
+/// Determine the downloader protocol implied by an info dictionary.
+pub fn determine_protocol(info: &InfoDict) -> Result<String, CoreError> {
+    if let Some(protocol) = info.get_str("protocol") {
+        return Ok(protocol.to_owned());
+    }
+    let url = info.get_str("url").ok_or_else(|| {
+        CoreError::new(
+            CoreErrorKind::MissingField,
+            "determine_protocol requires an info_dict url",
+        )
+    })?;
+    if url.starts_with("rtmp") {
+        return Ok("rtmp".to_owned());
+    }
+    let extension = determine_ext(Some(url), "unknown_video").to_ascii_lowercase();
+    if extension == "m3u8" {
+        return Ok(if info.get_bool("is_live").unwrap_or(false) {
+            "m3u8"
+        } else {
+            "m3u8_native"
+        }
+        .to_owned());
+    }
+    if extension == "f4m" {
+        return Ok("f4m".to_owned());
+    }
+    Ok(URL_SCHEME_RE.find(url).map_or_else(String::new, |scheme| {
+        scheme.as_str().trim_end_matches(':').to_owned()
+    }))
+}
+
+/// Parse an integer-like JSON value with yt-dlp's scaling semantics.
+pub fn int_or_none(
+    value: Option<&Value>,
+    mut scale: i64,
+    mut invscale: i64,
+    base: Option<u32>,
+) -> Option<i64> {
+    if invscale == 1 && scale < 1 {
+        invscale = (1.0 / scale as f64) as i64;
+        scale = 1;
+    }
+    if scale == 0 {
+        return None;
+    }
+    let integer = match value? {
+        Value::Number(value) => value
+            .as_i64()
+            .or_else(|| value.as_u64().and_then(|value| i64::try_from(value).ok()))
+            .or_else(|| value.as_f64().map(|value| value as i64)),
+        Value::String(value) => base.map_or_else(
+            || value.parse::<i64>().ok(),
+            |base| i64::from_str_radix(value.trim(), base).ok(),
+        ),
+        Value::Bool(value) => Some(i64::from(*value)),
+        _ => None,
+    }?;
+    let scaled = integer.checked_mul(invscale)?;
+    let quotient = scaled / scale;
+    let remainder = scaled % scale;
+    if remainder != 0 && ((scaled < 0) != (scale < 0)) {
+        quotient.checked_sub(1)
+    } else {
+        Some(quotient)
+    }
+}
+
+/// Parse a float-like JSON value with yt-dlp's scaling semantics.
+pub fn float_or_none(value: Option<&Value>, scale: f64, invscale: f64) -> Option<f64> {
+    if scale == 0.0 {
+        return None;
+    }
+    let value = match value? {
+        Value::Number(value) => value.as_f64()?,
+        Value::String(value) => value.parse::<f64>().ok()?,
+        Value::Bool(value) => f64::from(*value as u8),
+        _ => return None,
+    };
+    let result = value * invscale / scale;
+    result.is_finite().then_some(result)
+}
+
+/// Convert any JSON-compatible value using Python's string conversion for
+/// the common scalar values used by extractor metadata.
+pub fn str_or_none(value: Option<&Value>, default: Option<&str>) -> Option<String> {
+    let Some(value) = value else {
+        return default.map(str::to_owned);
+    };
+    Some(match value {
+        Value::Null => return default.map(str::to_owned),
+        Value::String(value) => value.clone(),
+        Value::Bool(value) => if *value { "True" } else { "False" }.to_owned(),
+        Value::Number(value) => value.to_string(),
+        Value::Array(_) | Value::Object(_) => value.to_string(),
+    })
+}
+
 /// Capabilities available in the first scaffold. No production feature is
 /// claimed until it has a differential test against the Python reference.
 pub const INITIAL_CAPABILITIES: &[Capability] = &[
@@ -239,6 +555,18 @@ pub const INITIAL_CAPABILITIES: &[Capability] = &[
         mode: EngineMode::Rust,
     },
     Capability {
+        name: "core-url-and-scalar-utilities",
+        mode: EngineMode::Rust,
+    },
+    Capability {
+        name: "ffmpeg-postprocessor-contract",
+        mode: EngineMode::Rust,
+    },
+    Capability {
+        name: "javascript-runtime-adapter",
+        mode: EngineMode::Rust,
+    },
+    Capability {
         name: "extractor-registry",
         mode: EngineMode::Rust,
     },
@@ -271,6 +599,34 @@ mod tests {
 
         assert_eq!(decoded, info);
         assert!(decoded.get("formats").is_some());
+    }
+
+    #[test]
+    fn info_dict_helpers_and_output_templates_preserve_fields() {
+        let mut info = InfoDict::new();
+        info.insert("id", json!("abc"));
+        info.insert("ext", json!("mp4"));
+        info.insert("playlist_index", json!(3));
+        info.insert("duration", json!(1.25));
+
+        assert_eq!(info.get_str("id"), Some("abc"));
+        assert_eq!(info.get_i64("playlist_index"), Some(3));
+        assert_eq!(info.get_f64("duration"), Some(1.25));
+        assert_eq!(
+            render_output_template("%(playlist_index)03d-%(id)s.%(ext)s", &info).unwrap(),
+            "003-abc.mp4"
+        );
+        assert_eq!(
+            render_output_template("%(duration).2f", &info).unwrap(),
+            "1.25"
+        );
+        assert!(matches!(
+            render_output_template("%(missing)s", &info),
+            Err(CoreError {
+                kind: CoreErrorKind::MissingField,
+                ..
+            })
+        ));
     }
 
     #[test]
@@ -311,5 +667,38 @@ mod tests {
         assert_eq!(parse_duration("PT1H0.040S"), Some(3_600.04));
         assert_eq!(parse_duration("01:02:03:050"), Some(3_723.05));
         assert_eq!(parse_duration("invalid"), None);
+    }
+
+    #[test]
+    fn core_url_and_scalar_utilities_match_reference_examples() {
+        assert_eq!(
+            determine_ext(Some("https://example.test/video.mp4?download=1"), "unknown"),
+            "mp4"
+        );
+        assert_eq!(
+            determine_ext(Some("https://example.test/manifest.m3u8/"), "unknown"),
+            "m3u8"
+        );
+        assert_eq!(determine_ext(None, "custom"), "custom");
+
+        let mut info = InfoDict::new();
+        info.insert("url", json!("https://example.test/manifest.m3u8"));
+        assert_eq!(determine_protocol(&info).unwrap(), "m3u8_native");
+        info.insert("is_live", json!(true));
+        assert_eq!(determine_protocol(&info).unwrap(), "m3u8");
+        info.insert("protocol", json!("http_dash_segments"));
+        assert_eq!(determine_protocol(&info).unwrap(), "http_dash_segments");
+
+        assert_eq!(int_or_none(Some(&json!("1536")), 1024, 1, None), Some(1));
+        assert_eq!(int_or_none(Some(&json!(-3)), 2, 1, None), Some(-2));
+        assert_eq!(float_or_none(Some(&json!("1.5")), 2.0, 1.0), Some(0.75));
+        assert_eq!(
+            str_or_none(Some(&json!(true)), None),
+            Some("True".to_owned())
+        );
+        assert_eq!(
+            str_or_none(None, Some("fallback")),
+            Some("fallback".to_owned())
+        );
     }
 }

@@ -16,7 +16,7 @@ pypi-files: AUTHORS Changelog.md LICENSE README.md README.txt supportedsites \
 .PHONY: all clean clean-all clean-test clean-dist clean-cache \
         completions completion-bash completion-fish completion-zsh \
         doc issuetemplates supportedsites ot offlinetest codetest test \
-        rust-extractor-manifest rust-test rust-parity tar pypi-files lazy-extractors install uninstall \
+        rust-extractor-manifest rust-cli-manifest rust-test rust-parity tar pypi-files lazy-extractors install uninstall \
         all-extra yt-dlp-extra current-ejs-version
 
 .IGNORE: current-ejs-version
@@ -90,7 +90,10 @@ offlinetest: codetest
 rust-extractor-manifest:
 	$(PYTHON) devscripts/generate_rust_extractor_manifest.py
 
-rust-test: rust-extractor-manifest
+rust-cli-manifest:
+	$(PYTHON) devscripts/generate_rust_cli_manifest.py
+
+rust-test: rust-extractor-manifest rust-cli-manifest
 	cargo test --workspace --manifest-path rust/Cargo.toml
 
 rust-parity: rust-test
@@ -98,8 +101,10 @@ rust-parity: rust-test
 	$(PYTHON) devscripts/rust_parity.py
 	$(PYTHON) devscripts/rust_parity.py --operation parse_bytes
 	$(PYTHON) devscripts/rust_parity.py --operation parse_duration
+	$(PYTHON) devscripts/rust_parity.py --operation core_utils
 	$(PYTHON) devscripts/rust_parity.py --operation request_model
 	$(PYTHON) devscripts/rust_parity.py --operation cli_options
+	$(PYTHON) devscripts/rust_parity.py --operation cli_inventory
 	$(PYTHON) devscripts/rust_parity.py --operation extractor_inventory
 
 PY_CODE_FOLDERS_CMD = find yt_dlp -type f -name '__init__.py' | sed 's|/__init__\.py||' | grep -v '/__' | sort

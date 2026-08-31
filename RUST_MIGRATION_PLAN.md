@@ -145,7 +145,18 @@ self-update behavior.
 - [x] native HLS media-playlist parsing, segment concatenation, and retries
 - [x] native DASH SegmentList parsing and concatenation
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
+- [x] bounded concurrent fragment assembly with ordered output and retries
+- [x] direct-resource resume using HTTP Range and partial-file reconciliation
+- [x] initial `InfoDict` accessors and Python-style output-template rendering
+- [x] core URL/protocol and scalar conversion utility slice with differential fixtures
+- [x] generated inventory of all 323 Python CLI option definitions and 394 aliases
+- [x] postprocessor lifecycle contract and shell-free FFmpeg subprocess bridge
+- [x] opt-in native postprocessing for remuxing and audio extraction
+- [x] JavaScript runtime discovery/version gating and stdin/temp-file adapters
+- [x] explicit process-based Python compatibility crate for unsupported surfaces
+- [x] explicit Python compatibility bridge for ordinary Rust-binary invocations
 
 Next: add downloader differential fixtures, expand the base extractor/result
-contracts, and add fragment concurrency/resume semantics without changing the
-Python default command.
+contracts, port the remaining FFmpeg operations and option groups, wire EJS
+challenge batches through the runtime adapter, and continue protocol coverage
+while keeping the Python compatibility backend available.

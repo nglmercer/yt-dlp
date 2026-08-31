@@ -4,12 +4,17 @@ use std::env;
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 
-use cli::{ParseResult, parse_args, parse_configured_args};
-use yt_dlp_core::format_bytes;
-use yt_dlp_core::{INITIAL_CAPABILITIES, MIGRATION_VERSION};
+use cli::{ParseResult, parse_args, parse_configured_args, rust_supported_option_aliases};
+use yt_dlp_core::{INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
+use yt_dlp_core::{format_bytes, render_output_template};
 use yt_dlp_downloader::{DirectDownloader, DownloadOptions, DownloadResult};
 use yt_dlp_extractor::ExtractorRegistry;
+use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
+use yt_dlp_postprocessor::{
+    FfmpegExtractAudio, FfmpegRemuxer, FfmpegVideoConvertor, PostProcessOptions, PostProcessResult,
+    PostProcessor,
+};
 
 #[derive(serde::Deserialize)]
 struct ParityRequest {
@@ -24,6 +29,18 @@ struct ParityResponse {
     error: Option<String>,
 }
 
+#[derive(serde::Deserialize)]
+struct CliOptionRecord {
+    group: String,
+    aliases: Vec<String>,
+    dest: Option<String>,
+    action: Option<String>,
+    #[serde(rename = "type")]
+    value_type: Option<String>,
+    nargs: Option<usize>,
+    choices: Option<Vec<String>>,
+}
+
 fn print_help() {
     println!("yt-dlp-rs {MIGRATION_VERSION} (experimental Rust migration scaffold)");
     println!("Usage: yt-dlp-rs [OPTIONS] URL [URL...]");
@@ -34,6 +51,7 @@ fn print_help() {
     println!("       yt-dlp-rs --parse-configured-args [OPTIONS] URL [URL...]");
     println!("       yt-dlp-rs --native-request [OPTIONS] URL [URL...]");
     println!("       yt-dlp-rs --native-download [OPTIONS] URL");
+    println!("       yt-dlp-rs --native-postprocess [OPTIONS] FILE");
     println!("       yt-dlp-rs --extractor-info URL");
     println!();
     println!("Implemented CLI options in this migration slice:");
@@ -41,10 +59,12 @@ fn print_help() {
     println!("  --proxy, --socket-timeout, --no-check-certificates");
     println!("  --user-agent, --referer, --add-headers");
     println!("  -f, --format, --all-formats, -S, --format-sort, --output");
+    println!("  --extract-audio, --audio-format, --remux-video, --ffmpeg-location");
     println!("  --no-playlist, --yes-playlist, --skip-download, --no-simulate");
     println!("  --native-request performs an opt-in raw request using the Rust network stack");
+    println!("  --native-postprocess runs the opt-in FFmpeg postprocessor bridge");
     println!();
-    println!("The Python yt-dlp implementation remains the active downloader.");
+    println!("The executable is Rust-only; unported surfaces fail explicitly as TODO.");
 }
 
 fn request_model(input: serde_json::Value) -> Result<serde_json::Value, String> {
@@ -122,6 +142,140 @@ fn cli_options(input: serde_json::Value) -> Result<serde_json::Value, String> {
     }
 }
 
+fn core_utils(input: serde_json::Value) -> Result<serde_json::Value, String> {
+    let object = input
+        .as_object()
+        .ok_or_else(|| "core_utils input must be a JSON object".to_owned())?;
+    let function = object
+        .get("function")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "core_utils input requires a function".to_owned())?;
+    let output = match function {
+        "determine_ext" => {
+            let url = object.get("url").and_then(serde_json::Value::as_str);
+            let default = object
+                .get("default")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("unknown_video");
+            serde_json::json!(yt_dlp_core::determine_ext(url, default))
+        }
+        "determine_protocol" => {
+            let value = object
+                .get("info")
+                .ok_or_else(|| "determine_protocol requires info".to_owned())?;
+            let map = value
+                .as_object()
+                .ok_or_else(|| "determine_protocol info must be an object".to_owned())?;
+            let mut info = InfoDict::new();
+            for (key, value) in map {
+                info.insert(key, value.clone());
+            }
+            serde_json::json!(
+                yt_dlp_core::determine_protocol(&info).map_err(|error| error.to_string())?
+            )
+        }
+        "int_or_none" => {
+            let scale = object
+                .get("scale")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(1);
+            let invscale = object
+                .get("invscale")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(1);
+            let base = object
+                .get("base")
+                .and_then(serde_json::Value::as_u64)
+                .map(|base| base as u32);
+            serde_json::json!(yt_dlp_core::int_or_none(
+                object.get("value"),
+                scale,
+                invscale,
+                base,
+            ))
+        }
+        "float_or_none" => {
+            let scale = object
+                .get("scale")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0);
+            let invscale = object
+                .get("invscale")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(1.0);
+            serde_json::json!(yt_dlp_core::float_or_none(
+                object.get("value"),
+                scale,
+                invscale,
+            ))
+        }
+        "str_or_none" => {
+            let default = object.get("default").and_then(serde_json::Value::as_str);
+            serde_json::json!(yt_dlp_core::str_or_none(object.get("value"), default))
+        }
+        _ => return Err(format!("unsupported core utility: {function}")),
+    };
+    Ok(output)
+}
+
+fn cli_inventory() -> Result<serde_json::Value, String> {
+    let records =
+        serde_json::from_str::<Vec<CliOptionRecord>>(include_str!("../data/options.json"))
+            .map_err(|error| format!("invalid generated CLI manifest: {error}"))?;
+    let aliases = records
+        .iter()
+        .flat_map(|record| record.aliases.iter())
+        .collect::<Vec<_>>();
+    let first_aliases = records
+        .iter()
+        .take(5)
+        .map(|record| record.aliases.clone())
+        .collect::<Vec<_>>();
+    let last_aliases = records
+        .iter()
+        .rev()
+        .take(5)
+        .rev()
+        .map(|record| record.aliases.clone())
+        .collect::<Vec<_>>();
+    let groups = records
+        .iter()
+        .map(|record| record.group.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    let value_options = records
+        .iter()
+        .filter(|record| record.nargs.is_some() || record.value_type.is_some())
+        .count();
+    let callback_options = records
+        .iter()
+        .filter(|record| record.action.as_deref() == Some("callback"))
+        .count();
+    let destination_count = records
+        .iter()
+        .filter(|record| record.dest.is_some())
+        .count();
+    let choice_count = records
+        .iter()
+        .filter(|record| {
+            record
+                .choices
+                .as_ref()
+                .is_some_and(|choices| !choices.is_empty())
+        })
+        .count();
+    Ok(serde_json::json!({
+        "count": records.len(),
+        "spelling_count": aliases.len(),
+        "group_count": groups.len(),
+        "value_option_count": value_options,
+        "callback_option_count": callback_options,
+        "destination_count": destination_count,
+        "choice_option_count": choice_count,
+        "first_aliases": first_aliases,
+        "last_aliases": last_aliases,
+    }))
+}
+
 fn extractor_inventory() -> Result<serde_json::Value, String> {
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
     let keys = registry
@@ -181,6 +335,8 @@ fn parity_response(request: ParityRequest) -> ParityResponse {
             },
             "request_model" => request_model(request.input).map(Some),
             "cli_options" => cli_options(request.input).map(Some),
+            "core_utils" => core_utils(request.input).map(Some),
+            "cli_inventory" => cli_inventory().map(Some),
             "extractor_inventory" => extractor_inventory().map(Some),
             operation => Err(format!("unsupported operation: {operation}")),
         };
@@ -311,32 +467,146 @@ fn native_request_argument(args: &[String]) -> Result<(), String> {
     stdout.flush().map_err(|error| error.to_string())
 }
 
-fn direct_output_path(info: &yt_dlp_core::InfoDict, options: &cli::CliOptions) -> PathBuf {
-    let id = info
-        .get("id")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("download");
-    let ext = info
-        .get("ext")
-        .and_then(serde_json::Value::as_str)
-        .map_or("bin", |extension| {
-            if matches!(extension, "m3u8" | "mpd") {
-                "mp4"
-            } else {
-                extension
-            }
-        });
+fn direct_output_path(info: &InfoDict, options: &cli::CliOptions) -> Result<PathBuf, String> {
+    let mut output_info = info.clone();
+    if matches!(
+        info.get("ext").and_then(serde_json::Value::as_str),
+        Some("m3u8" | "mpd")
+    ) {
+        output_info.insert("ext", serde_json::json!("mp4"));
+    }
     let template = options
         .outtmpl
         .get("default")
         .cloned()
         .unwrap_or_else(|| "%(id)s.%(ext)s".to_owned());
-    PathBuf::from(
-        template
-            .replace("%(id)s", id)
-            .replace("%(title)s", id)
-            .replace("%(ext)s", ext),
+    render_output_template(&template, &output_info)
+        .map(PathBuf::from)
+        .map_err(|error| error.to_string())
+}
+
+fn native_postprocess_options(options: &cli::CliOptions, simulate: bool) -> PostProcessOptions {
+    PostProcessOptions {
+        ffmpeg_location: options.ffmpeg_location.as_deref().map(PathBuf::from),
+        overwrite: !options.nopostoverwrites,
+        keep_video: options.keepvideo,
+        simulate: simulate || options.simulate == Some(true),
+        extra_args: options.postprocessor_args.clone(),
+    }
+}
+
+fn postprocess_rule_target(rule: &str) -> Option<String> {
+    rule.split('/')
+        .next()
+        .and_then(|rule| {
+            rule.rsplit_once('>')
+                .map_or(Some(rule), |(_, target)| Some(target))
+        })
+        .map(str::trim)
+        .filter(|target| !target.is_empty() && *target != "best")
+        .map(str::to_owned)
+}
+
+fn run_native_postprocessor(
+    info: &InfoDict,
+    options: &cli::CliOptions,
+    simulate: bool,
+) -> Result<PostProcessResult, String> {
+    let pp_options = native_postprocess_options(options, simulate);
+    if options.extractaudio {
+        let target = match options.audioformat.as_deref().unwrap_or("best") {
+            "best" => "mp3",
+            target => target,
+        };
+        let codec = match target {
+            "mp3" => Some("libmp3lame"),
+            "aac" | "m4a" => Some("aac"),
+            "opus" => Some("libopus"),
+            "vorbis" | "ogg" => Some("libvorbis"),
+            "flac" => Some("flac"),
+            "wav" => Some("pcm_s16le"),
+            _ => None,
+        }
+        .map(str::to_owned);
+        return FfmpegExtractAudio::new(target, codec)
+            .map_err(|error| error.to_string())?
+            .run(info, &pp_options)
+            .map_err(|error| error.to_string());
+    }
+    if let Some(rule) = options.remuxvideo.as_deref() {
+        let target = postprocess_rule_target(rule)
+            .ok_or_else(|| "--remux-video requires a target format".to_owned())?;
+        return FfmpegRemuxer::new(target)
+            .map_err(|error| error.to_string())?
+            .run(info, &pp_options)
+            .map_err(|error| error.to_string());
+    }
+    if options.recodevideo.is_some() {
+        let target = postprocess_rule_target(options.recodevideo.as_deref().unwrap_or_default())
+            .ok_or_else(|| "--recode-video requires a target format".to_owned())?;
+        return FfmpegVideoConvertor::new(target)
+            .map_err(|error| error.to_string())?
+            .run(info, &pp_options)
+            .map_err(|error| error.to_string());
+    }
+    Err(
+        "native postprocessing requires --extract-audio, --remux-video, or --recode-video"
+            .to_owned(),
     )
+}
+
+fn postprocess_result_json(result: &PostProcessResult) -> serde_json::Value {
+    serde_json::json!({
+        "files_to_delete": result.files_to_delete,
+        "info": result.info,
+        "command": result.command.as_ref().map(|command| command.iter()
+            .map(|argument| argument.to_string_lossy().into_owned()).collect::<Vec<_>>()),
+        "simulated": result.simulated,
+    })
+}
+
+fn native_postprocess_argument(args: &[String]) -> Result<(), String> {
+    let result = parse_configured_args(args).map_err(|error| error.to_string())?;
+    let ParseResult::Options(options) = result else {
+        return parse_options_result(result);
+    };
+    if options.urls.len() != 1 {
+        return Err("--native-postprocess requires exactly one input file".to_owned());
+    }
+    let input = PathBuf::from(&options.urls[0]);
+    if !input.is_file() && options.simulate != Some(true) {
+        return Err(format!("input file does not exist: {input:?}"));
+    }
+    let extension = input
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .unwrap_or("bin");
+    let mut info = InfoDict::new();
+    info.insert("filepath", serde_json::json!(input.to_string_lossy()));
+    info.insert("ext", serde_json::json!(extension));
+    info.insert(
+        "id",
+        serde_json::json!(
+            input
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .unwrap_or("video")
+        ),
+    );
+    let result = run_native_postprocessor(&info, &options, false)?;
+    if options.dumpjson || options.dump_single_json {
+        println!(
+            "{}",
+            serde_json::to_string(&postprocess_result_json(&result))
+                .map_err(|error| error.to_string())?
+        );
+    } else if let Some(path) = result.info.get_str("filepath") {
+        println!(
+            "[postprocess] {} -> {path}",
+            result.info.get_str("ext").unwrap_or("media")
+        );
+    }
+    Ok(())
 }
 
 fn download_result_json(result: &DownloadResult) -> serde_json::Value {
@@ -347,6 +617,7 @@ fn download_result_json(result: &DownloadResult) -> serde_json::Value {
         "path": result.path,
         "simulated": result.simulated,
         "fragments": result.fragments,
+        "resumed": result.resumed,
     })
 }
 
@@ -375,16 +646,18 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
         .ok_or_else(|| format!("no extractor matched URL: {url}"))?;
     if extractor.descriptor().key != "GenericIE" {
         return Err(format!(
-            "native direct download is not implemented for extractor {}",
-            extractor.descriptor().name
+            "TODO: native extractor {} ({}) is not implemented",
+            extractor.descriptor().key,
+            extractor.descriptor().name,
         ));
     }
     let info = extractor.extract(url).map_err(|error| error.to_string())?;
     let request = options.request_for_url(url, CookieJar::new().shared());
-    let output = direct_output_path(&info, &options);
+    let output = direct_output_path(&info, &options)?;
     let download_options = DownloadOptions {
         simulate: options.simulate == Some(true),
-        overwrite: true,
+        overwrite: options.overwrites != Some(false),
+        resume: options.continue_dl && options.overwrites != Some(true),
         retries: options
             .retries
             .as_u64()
@@ -395,6 +668,10 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
                     .and_then(|value| value.parse().ok())
             })
             .unwrap_or(10) as usize,
+        concurrent: usize::try_from(options.concurrent_fragments)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(1),
     };
     let downloader = DirectDownloader::native();
     let result = match info.get("ext").and_then(serde_json::Value::as_str) {
@@ -403,14 +680,45 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
         _ => downloader.download(&request, Some(&output), &download_options),
     }
     .map_err(|error| error.to_string())?;
+    let postprocessed =
+        if options.extractaudio || options.remuxvideo.is_some() || options.recodevideo.is_some() {
+            let mut post_info = info.clone();
+            if let Some(path) = result.path.as_ref() {
+                post_info.insert("filepath", serde_json::json!(path.to_string_lossy()));
+            } else {
+                post_info.insert("filepath", serde_json::json!(output.to_string_lossy()));
+            }
+            Some(run_native_postprocessor(
+                &post_info,
+                &options,
+                result.simulated,
+            )?)
+        } else {
+            None
+        };
     if options.dumpjson || options.dump_single_json {
+        let mut output_json = download_result_json(&result);
+        if let Some(postprocessed) = postprocessed {
+            output_json["postprocess"] = postprocess_result_json(&postprocessed);
+        }
         println!(
             "{}",
-            serde_json::to_string(&download_result_json(&result))
-                .map_err(|error| error.to_string())?
+            serde_json::to_string(&output_json).map_err(|error| error.to_string())?
         );
     } else if let Some(path) = result.path {
-        println!("[download] {} bytes -> {}", result.bytes, path.display());
+        if let Some(postprocessed) = postprocessed {
+            println!(
+                "[download] {} bytes -> {} -> {}",
+                result.bytes,
+                path.display(),
+                postprocessed
+                    .info
+                    .get_str("filepath")
+                    .unwrap_or("postprocessed")
+            );
+        } else {
+            println!("[download] {} bytes -> {}", result.bytes, path.display());
+        }
     } else {
         println!(
             "[download] simulated {} bytes from {}",
@@ -444,10 +752,60 @@ fn extractor_info_argument(args: &[String]) -> Result<(), String> {
 
 fn print_migration_status() -> Result<(), String> {
     println!("yt-dlp-rs {MIGRATION_VERSION}");
-    println!("active backend: Python compatibility");
+    println!("active backend: Rust-only");
     println!("Rust capabilities:");
     for capability in INITIAL_CAPABILITIES {
         println!("  {}: {:?}", capability.name, capability.mode);
+    }
+    let cli_manifest = cli_inventory()?;
+    let records =
+        serde_json::from_str::<Vec<CliOptionRecord>>(include_str!("../data/options.json"))
+            .map_err(|error| format!("invalid generated CLI manifest: {error}"))?;
+    let supported = rust_supported_option_aliases();
+    let native_definitions = records
+        .iter()
+        .filter(|record| {
+            record
+                .aliases
+                .iter()
+                .any(|alias| supported.contains(&alias.as_str()))
+        })
+        .count();
+    let native_spellings = records
+        .iter()
+        .flat_map(|record| record.aliases.iter())
+        .filter(|alias| supported.contains(&alias.as_str()))
+        .count();
+    println!(
+        "CLI inventory: {} definitions, {} spellings, {} groups",
+        cli_manifest["count"], cli_manifest["spelling_count"], cli_manifest["group_count"],
+    );
+    println!(
+        "CLI parser coverage: {} definitions, {} aliases; remaining options are TODO",
+        native_definitions, native_spellings,
+    );
+    println!("JavaScript runtimes:");
+    for kind in [
+        RuntimeKind::Deno,
+        RuntimeKind::Node,
+        RuntimeKind::QuickJs,
+        RuntimeKind::Bun,
+    ] {
+        match JavascriptRuntime::probe(kind, None) {
+            Ok(Some(runtime)) => println!(
+                "  {} {} at {} ({})",
+                runtime.info().name,
+                runtime.info().version,
+                runtime.info().path.display(),
+                if runtime.info().supported {
+                    "supported"
+                } else {
+                    "unsupported version"
+                }
+            ),
+            Ok(None) => println!("  {}: unavailable", kind.name()),
+            Err(error) => println!("  {}: {error}", kind.name()),
+        }
     }
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
     println!(
@@ -461,13 +819,13 @@ fn print_migration_status() -> Result<(), String> {
         .filter(|extractor| extractor.matcher_error_count() > 0)
     {
         println!(
-            "  pattern compatibility: {} ({})",
+            "  pattern TODO: {} ({})",
             extractor.descriptor().key,
             extractor.matcher_errors().join("; "),
         );
     }
     println!(
-        "extractor implementations: {} native, compatibility fallback pending",
+        "extractor implementations: {} native, remaining extractors are TODO",
         registry.native_implementation_count(),
     );
     Ok(())
@@ -477,7 +835,7 @@ fn main() {
     let args = env::args().skip(1).collect::<Vec<_>>();
     match args.first().map(String::as_str) {
         Some("--help") | Some("-h") => print_help(),
-        Some("--version") => println!("yt-dlp-rs {MIGRATION_VERSION}"),
+        Some("--version") => println!("{MIGRATION_VERSION}"),
         Some("--format-bytes") => match env::args().nth(2) {
             Some(value) => {
                 if let Err(error) = format_bytes_argument(&value) {
@@ -520,6 +878,12 @@ fn main() {
                 std::process::exit(2);
             }
         }
+        Some("--native-postprocess") => {
+            if let Err(error) = native_postprocess_argument(&args[1..]) {
+                eprintln!("yt-dlp-rs: {error}");
+                std::process::exit(2);
+            }
+        }
         Some("--extractor-info") => {
             if let Err(error) = extractor_info_argument(&args[1..]) {
                 eprintln!("yt-dlp-rs: {error}");
@@ -532,10 +896,15 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        _ => {
-            eprintln!("yt-dlp-rs: Rust migration scaffold; no download features are active yet");
-            eprintln!("Try --migration-status, --parse-args, or --help.");
+        Some("--python-compat") => {
+            eprintln!("yt-dlp-rs: Python compatibility is disabled; this build is Rust-only");
             std::process::exit(2);
+        }
+        _ => {
+            if let Err(error) = native_download_argument(&args) {
+                eprintln!("yt-dlp-rs: {error}");
+                std::process::exit(2);
+            }
         }
     }
 }

@@ -1,0 +1,11 @@
+[package]
+name = "yt-dlp-postprocessor"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+indexmap.workspace = true
+serde_json.workspace = true
+yt-dlp-core = { path = "../ytdlp-core" }

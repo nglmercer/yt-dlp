@@ -1,0 +1,95 @@
+[
+  {
+    "function": "determine_ext",
+    "url": "https://example.test/video.mp4?download=1"
+  },
+  {
+    "function": "determine_ext",
+    "url": "https://example.test/manifest.m3u8/"
+  },
+  {
+    "function": "determine_ext",
+    "url": "https://example.test/no-extension",
+    "default": "custom"
+  },
+  {
+    "function": "determine_ext",
+    "url": null,
+    "default": "custom"
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "https://example.test/video.mp4"
+    }
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "https://example.test/manifest.m3u8"
+    }
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "https://example.test/manifest.m3u8",
+      "is_live": true
+    }
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "https://example.test/manifest.f4m"
+    }
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "rtmp://example.test/live"
+    }
+  },
+  {
+    "function": "determine_protocol",
+    "info": {
+      "url": "https://example.test/video",
+      "protocol": "http_dash_segments"
+    }
+  },
+  {
+    "function": "int_or_none",
+    "value": "1536",
+    "scale": 1024
+  },
+  {
+    "function": "int_or_none",
+    "value": -3,
+    "scale": 2
+  },
+  {
+    "function": "int_or_none",
+    "value": "ff",
+    "base": 16
+  },
+  {
+    "function": "float_or_none",
+    "value": "1.5",
+    "scale": 2
+  },
+  {
+    "function": "float_or_none",
+    "value": null
+  },
+  {
+    "function": "str_or_none",
+    "value": true
+  },
+  {
+    "function": "str_or_none",
+    "value": 123
+  },
+  {
+    "function": "str_or_none",
+    "value": null,
+    "default": "fallback"
+  }
+]

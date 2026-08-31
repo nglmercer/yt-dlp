@@ -15,9 +15,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from yt_dlp.networking import Request  # noqa: E402
-from yt_dlp.options import parseOpts  # noqa: E402
+from yt_dlp.options import create_parser, parseOpts  # noqa: E402
 from yt_dlp.extractor import gen_extractors  # noqa: E402
-from yt_dlp.utils import format_bytes, parse_bytes, parse_duration  # noqa: E402
+from yt_dlp.utils import (  # noqa: E402
+    determine_ext,
+    determine_protocol,
+    float_or_none,
+    format_bytes,
+    int_or_none,
+    parse_bytes,
+    parse_duration,
+    str_or_none,
+)
 
 
 DEFAULT_RUST_BINARY = ROOT / 'rust' / 'target' / 'debug' / 'yt-dlp-rs'
@@ -64,7 +73,7 @@ def main() -> int:
         '--operation',
         choices=(
             'format_bytes', 'parse_bytes', 'parse_duration', 'request_model',
-            'cli_options', 'extractor_inventory'),
+            'cli_options', 'cli_inventory', 'extractor_inventory', 'core_utils'),
         default='format_bytes')
     parser.add_argument('--fixture', type=Path)
     args = parser.parse_args()
@@ -117,6 +126,52 @@ def main() -> int:
                 for extractor in classes),
             'embed_only_count': sum(extractor._VALID_URL is False for extractor in classes),
         }]
+    elif args.operation == 'cli_inventory':
+        parser = create_parser()
+        records = [*parser.option_list]
+        for group in parser.option_groups:
+            records.extend(group.option_list)
+        expected = [{
+            'count': len(records),
+            'spelling_count': sum(len(option._short_opts) + len(option._long_opts) for option in records),
+            'group_count': len(parser.option_groups) + 1,
+            'value_option_count': sum(option.nargs is not None or option.type is not None for option in records),
+            'callback_option_count': sum(option.action == 'callback' for option in records),
+            'destination_count': sum(option.dest is not None for option in records),
+            'choice_option_count': sum(bool(option.choices) for option in records),
+            'first_aliases': [
+                [*option._short_opts, *option._long_opts] for option in records[:5]
+            ],
+            'last_aliases': [
+                [*option._short_opts, *option._long_opts] for option in records[-5:]
+            ],
+        }]
+    elif args.operation == 'core_utils':
+        expected = []
+        for case in values:
+            function = case['function']
+            if function == 'determine_ext':
+                result = determine_ext(case.get('url'), case.get('default', 'unknown_video'))
+            elif function == 'determine_protocol':
+                result = determine_protocol(case['info'])
+            elif function == 'int_or_none':
+                result = int_or_none(
+                    case.get('value'),
+                    scale=case.get('scale', 1),
+                    invscale=case.get('invscale', 1),
+                    base=case.get('base'),
+                )
+            elif function == 'float_or_none':
+                result = float_or_none(
+                    case.get('value'),
+                    scale=case.get('scale', 1),
+                    invscale=case.get('invscale', 1),
+                )
+            elif function == 'str_or_none':
+                result = str_or_none(case.get('value'), case.get('default'))
+            else:
+                raise ValueError(f'unknown core utility: {function}')
+            expected.append(result)
     else:
         expected = []
         for case in values:
@@ -128,6 +183,8 @@ def main() -> int:
                 'proxy': opts.proxy,
                 'socket_timeout': opts.socket_timeout,
                 'no_check_certificate': opts.no_check_certificate,
+                'js_runtimes': opts.js_runtimes,
+                'remote_components': opts.remote_components,
                 'headers': opts.headers,
                 'user_agent': opts.user_agent,
                 'referer': opts.referer,
@@ -140,13 +197,21 @@ def main() -> int:
                 'format_sort': opts.format_sort,
                 'extractaudio': opts.extractaudio,
                 'audioformat': opts.audioformat,
+                'audioquality': opts.audioquality,
                 'merge_output_format': opts.merge_output_format,
                 'remuxvideo': opts.remuxvideo,
+                'recodevideo': opts.recodevideo,
+                'postprocessor_args': opts.postprocessor_args,
+                'keepvideo': opts.keepvideo,
+                'nopostoverwrites': opts.nopostoverwrites,
+                'ffmpeg_location': opts.ffmpeg_location,
                 'sleep_interval_subtitles': opts.sleep_interval_subtitles,
                 'sleep_interval_requests': opts.sleep_interval_requests,
                 'sleep_interval': opts.sleep_interval,
                 'max_sleep_interval': opts.max_sleep_interval,
                 'outtmpl': opts.outtmpl,
+                'overwrites': opts.overwrites,
+                'continue_dl': opts.continue_dl,
                 'noplaylist': opts.noplaylist,
                 'dumpjson': opts.dumpjson,
                 'dump_single_json': opts.dump_single_json,

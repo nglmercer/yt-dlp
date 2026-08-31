@@ -4,7 +4,9 @@ members = [
     "crates/ytdlp-cli",
     "crates/ytdlp-downloader",
     "crates/ytdlp-extractor",
-  "crates/ytdlp-networking",
+    "crates/ytdlp-networking",
+    "crates/ytdlp-postprocessor",
+    "crates/ytdlp-javascript",
 ]
 resolver = "3"
 

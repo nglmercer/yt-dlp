@@ -1594,6 +1594,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "yt-dlp-javascript"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "yt-dlp-networking"
 version = "0.0.0"
 dependencies = [
@@ -1602,6 +1610,15 @@ dependencies = [
  "reqwest",
  "serde_json",
  "url",
+]
+
+[[package]]
+name = "yt-dlp-postprocessor"
+version = "0.0.0"
+dependencies = [
+ "indexmap",
+ "serde_json",
+ "yt-dlp-core",
 ]
 
 [[package]]
@@ -1614,7 +1631,9 @@ dependencies = [
  "yt-dlp-core",
  "yt-dlp-downloader",
  "yt-dlp-extractor",
+ "yt-dlp-javascript",
  "yt-dlp-networking",
+ "yt-dlp-postprocessor",
 ]
 
 [[package]]

@@ -67,5 +67,29 @@
     "-t",
     "sleep",
     "video"
+  ],
+  [
+    "--audio-quality",
+    "2",
+    "--recode-video",
+    "mkv",
+    "--ffmpeg-location",
+    "/opt/bin",
+    "--keep-video",
+    "--no-post-overwrites",
+    "--ppa",
+    "Merger+ffmpeg_i1:-hide_banner -nostdin",
+    "video"
+  ],
+  [
+    "--no-js-runtimes",
+    "--js-runtimes",
+    "node:/opt/node",
+    "--js-runtimes=bun",
+    "--remote-components",
+    "ejs:github",
+    "--remote-components",
+    "ejs:npm",
+    "video"
   ]
 ]

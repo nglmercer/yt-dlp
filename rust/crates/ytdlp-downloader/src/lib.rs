@@ -4,11 +4,13 @@
 //! construction is supplied by the caller, the native director performs the
 //! HTTP exchange, and the response is written through a temporary sibling
 //! file before being committed. Fragmented protocols and postprocessing will
-//! build on this result contract later.
+//! HLS, DASH, and bounded fragment assembly build on this result contract.
 
+use std::collections::VecDeque;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, XmlVersion};
@@ -19,7 +21,9 @@ use yt_dlp_networking::{ErrorKind, Request, RequestDirector, RequestError};
 pub struct DownloadOptions {
     pub simulate: bool,
     pub overwrite: bool,
+    pub resume: bool,
     pub retries: usize,
+    pub concurrent: usize,
 }
 
 impl Default for DownloadOptions {
@@ -27,7 +31,9 @@ impl Default for DownloadOptions {
         Self {
             simulate: false,
             overwrite: true,
+            resume: true,
             retries: 10,
+            concurrent: 1,
         }
     }
 }
@@ -40,6 +46,13 @@ pub struct DownloadResult {
     pub path: Option<PathBuf>,
     pub simulated: bool,
     pub fragments: Option<usize>,
+    pub resumed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fragment {
+    pub index: usize,
+    pub request: Request,
 }
 
 #[derive(Debug)]
@@ -130,13 +143,34 @@ impl DirectDownloader {
         output: Option<&Path>,
         options: &DownloadOptions,
     ) -> Result<DownloadResult, DownloadError> {
-        let response = self.send_with_retries(request, options.retries)?;
+        let mut request = request.clone();
+        let mut prefix = Vec::new();
+        let mut resumed = false;
+        if options.resume {
+            if let Some(output) = output {
+                if output.is_file() {
+                    prefix = fs::read(output)?;
+                    if !prefix.is_empty() {
+                        request
+                            .headers_mut()
+                            .set("Range", format!("bytes={}-", prefix.len()));
+                    }
+                }
+            }
+        }
+        let response = self.send_with_retries(&request, options.retries)?;
         Self::check_response(&response)?;
+        let mut body = response.body().to_vec();
+        if !prefix.is_empty() && response.status() == 206 {
+            prefix.extend_from_slice(&body);
+            body = prefix;
+            resumed = true;
+        }
 
         let path = if options.simulate {
             None
         } else if let Some(output) = output {
-            Some(write_atomic(output, response.body(), options.overwrite)?)
+            Some(write_atomic(output, &body, options.overwrite || resumed)?)
         } else {
             None
         };
@@ -144,10 +178,11 @@ impl DirectDownloader {
         Ok(DownloadResult {
             url: response.url().to_owned(),
             status: response.status(),
-            bytes: response.body().len(),
+            bytes: body.len(),
             path,
             simulated: options.simulate,
             fragments: None,
+            resumed,
         })
     }
 
@@ -171,16 +206,22 @@ impl DirectDownloader {
             return self.download_hls(&variant_request, output, options);
         }
 
-        let mut body = Vec::new();
-        for segment in &playlist.segments {
-            let mut segment_request = request.clone();
-            segment_request.set_url(segment);
-            segment_request.set_data(None);
-            segment_request.set_method("GET")?;
-            let response = self.send_with_retries(&segment_request, options.retries)?;
-            Self::check_response(&response)?;
-            body.extend_from_slice(response.body());
-        }
+        let fragments = playlist
+            .segments
+            .iter()
+            .enumerate()
+            .map(|(index, segment)| {
+                let mut segment_request = request.clone();
+                segment_request.set_url(segment);
+                segment_request.set_data(None);
+                segment_request.set_method("GET")?;
+                Ok(Fragment {
+                    index,
+                    request: segment_request,
+                })
+            })
+            .collect::<Result<Vec<_>, DownloadError>>()?;
+        let (status, body) = self.fetch_fragments(&fragments, options)?;
         let path = if options.simulate {
             None
         } else if let Some(output) = output {
@@ -190,17 +231,109 @@ impl DirectDownloader {
         };
         Ok(DownloadResult {
             url: request.url().to_owned(),
-            status: manifest.status(),
+            status,
             bytes: body.len(),
             path,
             simulated: options.simulate,
-            fragments: Some(playlist.segments.len()),
+            fragments: Some(fragments.len()),
+            resumed: false,
         })
     }
 
-    /// Download a DASH manifest that exposes initialization and media URLs
-    /// through `SegmentList`. Segment-template expansion is kept as the next
-    /// protocol increment so this path remains deterministic and bounded.
+    fn fetch_fragments(
+        &self,
+        fragments: &[Fragment],
+        options: &DownloadOptions,
+    ) -> Result<(u16, Vec<u8>), DownloadError> {
+        if fragments.is_empty() {
+            return Err(DownloadError::InvalidPlaylist(
+                "no media fragments".to_owned(),
+            ));
+        }
+        let worker_count = options.concurrent.max(1).min(fragments.len());
+        let queue = Arc::new(Mutex::new(VecDeque::from(fragments.to_vec())));
+        let results = Arc::new(Mutex::new(Vec::with_capacity(fragments.len())));
+        std::thread::scope(|scope| {
+            for _ in 0..worker_count {
+                let queue = Arc::clone(&queue);
+                let results = Arc::clone(&results);
+                scope.spawn(move || {
+                    loop {
+                        let fragment = queue.lock().ok().and_then(|mut queue| queue.pop_front());
+                        let Some(fragment) = fragment else {
+                            break;
+                        };
+                        let result = self
+                            .send_with_retries(&fragment.request, options.retries)
+                            .and_then(|response| {
+                                Self::check_response(&response)?;
+                                Ok((fragment.index, response.status(), response.body().to_vec()))
+                            });
+                        let failed = result.is_err();
+                        if let Ok(mut results) = results.lock() {
+                            results.push(result);
+                        }
+                        if failed {
+                            break;
+                        }
+                    }
+                });
+            }
+        });
+
+        let mut results = Arc::try_unwrap(results)
+            .map_err(|_| DownloadError::InvalidPlaylist("fragment result lock busy".to_owned()))?
+            .into_inner()
+            .map_err(|_| {
+                DownloadError::InvalidPlaylist("fragment result lock poisoned".to_owned())
+            })?;
+        if let Some(position) = results.iter().position(Result::is_err) {
+            if let Err(error) = results.swap_remove(position) {
+                return Err(error);
+            }
+        }
+        results.sort_by_key(|result| result.as_ref().map_or(usize::MAX, |result| result.0));
+        let status = results
+            .first()
+            .and_then(|result| result.as_ref().ok().map(|result| result.1))
+            .unwrap_or(200);
+        let mut body = Vec::new();
+        for result in results {
+            let (_, _, fragment_body) = result?;
+            body.extend_from_slice(&fragment_body);
+        }
+        Ok((status, body))
+    }
+
+    /// Fetch an explicitly ordered fragment set and atomically assemble it.
+    pub fn download_fragments(
+        &self,
+        fragments: &[Fragment],
+        output: Option<&Path>,
+        options: &DownloadOptions,
+    ) -> Result<DownloadResult, DownloadError> {
+        let (status, body) = self.fetch_fragments(fragments, options)?;
+        let path = if options.simulate {
+            None
+        } else if let Some(output) = output {
+            Some(write_atomic(output, &body, options.overwrite)?)
+        } else {
+            None
+        };
+        Ok(DownloadResult {
+            url: fragments
+                .first()
+                .map(|fragment| fragment.request.url().to_owned())
+                .unwrap_or_default(),
+            status,
+            bytes: body.len(),
+            path,
+            simulated: options.simulate,
+            fragments: Some(fragments.len()),
+            resumed: false,
+        })
+    }
+
     pub fn download_dash(
         &self,
         request: &Request,
@@ -210,16 +343,22 @@ impl DirectDownloader {
         let manifest = self.send_with_retries(request, options.retries)?;
         Self::check_response(&manifest)?;
         let playlist = parse_dash_mpd(request.url(), manifest.body())?;
-        let mut body = Vec::new();
-        for segment in &playlist.segments {
-            let mut segment_request = request.clone();
-            segment_request.set_url(segment);
-            segment_request.set_data(None);
-            segment_request.set_method("GET")?;
-            let response = self.send_with_retries(&segment_request, options.retries)?;
-            Self::check_response(&response)?;
-            body.extend_from_slice(response.body());
-        }
+        let fragments = playlist
+            .segments
+            .iter()
+            .enumerate()
+            .map(|(index, segment)| {
+                let mut segment_request = request.clone();
+                segment_request.set_url(segment);
+                segment_request.set_data(None);
+                segment_request.set_method("GET")?;
+                Ok(Fragment {
+                    index,
+                    request: segment_request,
+                })
+            })
+            .collect::<Result<Vec<_>, DownloadError>>()?;
+        let (status, body) = self.fetch_fragments(&fragments, options)?;
         let path = if options.simulate {
             None
         } else if let Some(output) = output {
@@ -229,11 +368,12 @@ impl DirectDownloader {
         };
         Ok(DownloadResult {
             url: request.url().to_owned(),
-            status: manifest.status(),
+            status: manifest.status().max(status),
             bytes: body.len(),
             path,
             simulated: options.simulate,
-            fragments: Some(playlist.segments.len()),
+            fragments: Some(fragments.len()),
+            resumed: false,
         })
     }
 }
@@ -779,6 +919,50 @@ mod tests {
     }
 
     #[test]
+    fn direct_downloader_resumes_existing_file_with_range_request() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0; 2048];
+            let count = std::io::Read::read(&mut stream, &mut request).unwrap();
+            let request = String::from_utf8_lossy(&request[..count]);
+            assert!(request.contains("Range: bytes=4-\r\n"));
+            stream
+                .write_all(
+                    b"HTTP/1.1 206 Partial Content\r\nContent-Length: 4\r\nContent-Range: bytes 4-7/8\r\nConnection: close\r\n\r\nrest",
+                )
+                .unwrap();
+        });
+
+        let output = std::env::temp_dir().join(format!(
+            "yt-dlp-rs-resume-{}-{}.bin",
+            std::process::id(),
+            address.port()
+        ));
+        fs::write(&output, b"part").unwrap();
+        let result = DirectDownloader::native()
+            .download(
+                &Request::new(format!("http://{address}/media.bin")),
+                Some(&output),
+                &DownloadOptions {
+                    simulate: false,
+                    overwrite: false,
+                    resume: true,
+                    retries: 0,
+                    concurrent: 1,
+                },
+            )
+            .unwrap();
+
+        assert!(result.resumed);
+        assert_eq!(result.bytes, 8);
+        assert_eq!(fs::read(&output).unwrap(), b"partrest");
+        fs::remove_file(output).unwrap();
+        server.join().unwrap();
+    }
+
+    #[test]
     fn simulated_download_does_not_create_output() {
         let output =
             std::env::temp_dir().join(format!("yt-dlp-rs-simulated-{}.bin", std::process::id()));
@@ -789,7 +973,9 @@ mod tests {
         let options = DownloadOptions {
             simulate: true,
             overwrite: false,
+            resume: true,
             retries: 0,
+            concurrent: 1,
         };
         assert!(options.simulate);
     }
@@ -919,7 +1105,9 @@ mod tests {
                 &DownloadOptions {
                     simulate: false,
                     overwrite: true,
+                    resume: false,
                     retries: 0,
+                    concurrent: 1,
                 },
             )
             .unwrap();
@@ -976,7 +1164,9 @@ mod tests {
                 &DownloadOptions {
                     simulate: false,
                     overwrite: true,
+                    resume: false,
                     retries: 0,
+                    concurrent: 1,
                 },
             )
             .unwrap();
@@ -985,6 +1175,64 @@ mod tests {
         assert_eq!(result.fragments, Some(3));
         assert_eq!(result.bytes, 10);
         assert_eq!(fs::read(&output).unwrap(), b"INITONETWO");
+        fs::remove_file(output).unwrap();
+        server.join().unwrap();
+    }
+
+    #[test]
+    fn fragment_downloader_limits_workers_and_restores_playlist_order() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            for _ in 0..3 {
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut request = [0; 2048];
+                let count = std::io::Read::read(&mut stream, &mut request).unwrap();
+                let request = String::from_utf8_lossy(&request[..count]);
+                let body = match request.split_whitespace().nth(1).unwrap_or_default() {
+                    "/zero" => b"ZERO".to_vec(),
+                    "/one" => b"ONE".to_vec(),
+                    "/two" => b"TWO".to_vec(),
+                    _ => Vec::new(),
+                };
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                );
+                stream.write_all(response.as_bytes()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+        });
+
+        let fragments = ["zero", "one", "two"]
+            .into_iter()
+            .enumerate()
+            .map(|(index, name)| Fragment {
+                index,
+                request: Request::new(format!("http://{address}/{name}")),
+            })
+            .collect::<Vec<_>>();
+        let output = std::env::temp_dir().join(format!(
+            "yt-dlp-rs-fragments-{}-{}.bin",
+            std::process::id(),
+            address.port()
+        ));
+        let result = DirectDownloader::native()
+            .download_fragments(
+                &fragments,
+                Some(&output),
+                &DownloadOptions {
+                    simulate: false,
+                    overwrite: true,
+                    resume: false,
+                    retries: 0,
+                    concurrent: 2,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.fragments, Some(3));
+        assert_eq!(fs::read(&output).unwrap(), b"ZEROONETWO");
         fs::remove_file(output).unwrap();
         server.join().unwrap();
     }

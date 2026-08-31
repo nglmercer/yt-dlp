@@ -618,7 +618,7 @@ impl PartialEq for Request {
 impl Eq for Request {}
 
 /// A request handler implemented by a concrete transport backend.
-pub trait RequestHandler {
+pub trait RequestHandler: Send + Sync {
     fn name(&self) -> &str;
 
     fn preference(&self, _request: &Request) -> i32 {

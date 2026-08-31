@@ -8,6 +8,8 @@ pub struct CliOptions {
     pub proxy: Option<String>,
     pub socket_timeout: Option<f64>,
     pub no_check_certificate: bool,
+    pub js_runtimes: Vec<String>,
+    pub remote_components: Vec<String>,
     pub headers: IndexMap<String, String>,
     pub user_agent: Option<String>,
     pub referer: Option<String>,
@@ -20,13 +22,21 @@ pub struct CliOptions {
     pub format_sort: Vec<String>,
     pub extractaudio: bool,
     pub audioformat: Option<String>,
+    pub audioquality: Option<String>,
     pub merge_output_format: Option<String>,
     pub remuxvideo: Option<String>,
+    pub recodevideo: Option<String>,
+    pub postprocessor_args: IndexMap<String, Vec<String>>,
+    pub keepvideo: bool,
+    pub nopostoverwrites: bool,
+    pub ffmpeg_location: Option<String>,
     pub sleep_interval_subtitles: f64,
     pub sleep_interval_requests: Option<f64>,
     pub sleep_interval: Option<f64>,
     pub max_sleep_interval: Option<f64>,
     pub outtmpl: IndexMap<String, String>,
+    pub overwrites: Option<bool>,
+    pub continue_dl: bool,
     pub noplaylist: bool,
     pub dumpjson: bool,
     pub dump_single_json: bool,
@@ -38,6 +48,98 @@ pub struct CliOptions {
     pub concurrent_fragments: i64,
     pub ignoreconfig: Option<bool>,
     pub config_locations: Option<Vec<String>>,
+}
+
+/// Option spellings understood by the typed Rust parser.  The generated
+/// Python manifest is compared with this list for migration diagnostics; it
+/// prevents an option from disappearing when yt-dlp adds a new alias.
+pub fn rust_supported_option_aliases() -> &'static [&'static str] {
+    &[
+        "-h",
+        "--help",
+        "--version",
+        "--proxy",
+        "--socket-timeout",
+        "--no-check-certificates",
+        "--js-runtimes",
+        "--no-js-runtimes",
+        "--remote-components",
+        "--no-remote-components",
+        "--ignore-config",
+        "--no-config",
+        "--no-config-locations",
+        "--config-locations",
+        "--user-agent",
+        "--referer",
+        "--add-headers",
+        "--quiet",
+        "--no-quiet",
+        "--verbose",
+        "--no-warnings",
+        "--simulate",
+        "--no-simulate",
+        "--skip-download",
+        "--no-download",
+        "--format",
+        "--all-formats",
+        "--format-sort",
+        "--format-sort-reset",
+        "--extract-audio",
+        "--audio-format",
+        "--audio-quality",
+        "--merge-output-format",
+        "--remux-video",
+        "--recode-video",
+        "--postprocessor-args",
+        "--ppa",
+        "--keep-video",
+        "--no-keep-video",
+        "--post-overwrites",
+        "--no-post-overwrites",
+        "--ffmpeg-location",
+        "--sleep-subtitles",
+        "--sleep-requests",
+        "--sleep-interval",
+        "--min-sleep-interval",
+        "--max-sleep-interval",
+        "--output",
+        "--no-overwrites",
+        "--force-overwrites",
+        "--yes-overwrites",
+        "--no-force-overwrites",
+        "--continue",
+        "--no-continue",
+        "--no-playlist",
+        "--yes-playlist",
+        "--list-formats",
+        "--batch-file",
+        "--playlist-items",
+        "--age-limit",
+        "--retries",
+        "--concurrent-fragments",
+        "--alias",
+        "--preset-alias",
+        "-t",
+        "-f",
+        "-S",
+        "-o",
+        "-a",
+        "-P",
+        "-u",
+        "-p",
+        "-q",
+        "-v",
+        "-s",
+        "-j",
+        "-J",
+        "-F",
+        "-x",
+        "-k",
+        "-i",
+        "-n",
+        "-c",
+        "-w",
+    ]
 }
 
 impl CliOptions {
@@ -82,6 +184,8 @@ impl Default for CliOptions {
             proxy: None,
             socket_timeout: None,
             no_check_certificate: false,
+            js_runtimes: vec!["deno".to_owned()],
+            remote_components: Vec::new(),
             headers: IndexMap::new(),
             user_agent: None,
             referer: None,
@@ -94,13 +198,21 @@ impl Default for CliOptions {
             format_sort: Vec::new(),
             extractaudio: false,
             audioformat: Some("best".to_owned()),
+            audioquality: Some("5".to_owned()),
             merge_output_format: None,
             remuxvideo: None,
+            recodevideo: None,
+            postprocessor_args: IndexMap::new(),
+            keepvideo: false,
+            nopostoverwrites: false,
+            ffmpeg_location: None,
             sleep_interval_subtitles: 0.0,
             sleep_interval_requests: None,
             sleep_interval: None,
             max_sleep_interval: None,
             outtmpl: IndexMap::new(),
+            overwrites: None,
+            continue_dl: true,
             noplaylist: false,
             dumpjson: false,
             dump_single_json: false,
@@ -211,6 +323,26 @@ fn add_prefixed_value(
         }
     }
     values.insert(default_prefix.to_owned(), value.to_owned());
+}
+
+fn add_postprocessor_args(
+    values: &mut IndexMap<String, Vec<String>>,
+    value: &str,
+) -> Result<(), CliError> {
+    let (key, arguments) = value
+        .split_once(':')
+        .ok_or_else(|| CliError::new("--postprocessor-args must be NAME:ARGS"))?;
+    if key.is_empty() {
+        return Err(CliError::new(
+            "--postprocessor-args requires a non-empty processor name",
+        ));
+    }
+    let key = key.to_ascii_lowercase();
+    values
+        .entry(key)
+        .or_default()
+        .extend(split_shell_words(arguments)?);
+    Ok(())
 }
 
 fn split_shell_words(value: &str) -> Result<Vec<String>, CliError> {
@@ -569,6 +701,20 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     )?);
                 }
                 "--no-check-certificates" => options.no_check_certificate = true,
+                "--js-runtimes" => options.js_runtimes.push(option_value(
+                    args,
+                    &mut index,
+                    option,
+                    inline_value,
+                )?),
+                "--no-js-runtimes" => options.js_runtimes.clear(),
+                "--remote-components" => options.remote_components.push(option_value(
+                    args,
+                    &mut index,
+                    option,
+                    inline_value,
+                )?),
+                "--no-remote-components" => options.remote_components.clear(),
                 "--ignore-config" | "--no-config" => options.ignoreconfig = Some(true),
                 "--no-config-locations" => options.config_locations = None,
                 "--config-locations" => {
@@ -615,12 +761,32 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     options.audioformat =
                         Some(option_value(args, &mut index, option, inline_value)?);
                 }
+                "--audio-quality" => {
+                    options.audioquality =
+                        Some(option_value(args, &mut index, option, inline_value)?);
+                }
                 "--merge-output-format" => {
                     options.merge_output_format =
                         Some(option_value(args, &mut index, option, inline_value)?);
                 }
                 "--remux-video" => {
                     options.remuxvideo =
+                        Some(option_value(args, &mut index, option, inline_value)?);
+                }
+                "--recode-video" => {
+                    options.recodevideo =
+                        Some(option_value(args, &mut index, option, inline_value)?);
+                }
+                "--postprocessor-args" | "--ppa" => {
+                    let value = option_value(args, &mut index, option, inline_value)?;
+                    add_postprocessor_args(&mut options.postprocessor_args, &value)?;
+                }
+                "--keep-video" => options.keepvideo = true,
+                "--no-keep-video" => options.keepvideo = false,
+                "--post-overwrites" => options.nopostoverwrites = false,
+                "--no-post-overwrites" => options.nopostoverwrites = true,
+                "--ffmpeg-location" => {
+                    options.ffmpeg_location =
                         Some(option_value(args, &mut index, option, inline_value)?);
                 }
                 "--sleep-subtitles" => {
@@ -662,6 +828,11 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     ],
                     "default",
                 ),
+                "--no-overwrites" => options.overwrites = Some(false),
+                "--force-overwrites" | "--yes-overwrites" => options.overwrites = Some(true),
+                "--no-force-overwrites" => options.overwrites = None,
+                "--continue" => options.continue_dl = true,
+                "--no-continue" => options.continue_dl = false,
                 "--no-playlist" => options.noplaylist = true,
                 "--yes-playlist" => options.noplaylist = false,
                 "--list-formats" => options.listformats = Some(true),
@@ -710,7 +881,10 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     'J' => options.dump_single_json = true,
                     'F' => options.listformats = Some(true),
                     'x' => options.extractaudio = true,
+                    'k' => options.keepvideo = true,
                     'i' | 'n' => {}
+                    'c' => options.continue_dl = true,
+                    'w' => options.overwrites = Some(false),
                     _ => return Err(CliError::new(format!("unknown option -{flag}"))),
                 }
             }
@@ -766,8 +940,11 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
             "-J" => options.dump_single_json = true,
             "-F" => options.listformats = Some(true),
             "-x" => options.extractaudio = true,
+            "-k" => options.keepvideo = true,
             "-i" => {}
             "-n" => {}
+            "-c" => options.continue_dl = true,
+            "-w" => options.overwrites = Some(false),
             _ => return Err(CliError::new(format!("unknown option {short}"))),
         }
         index += 1;

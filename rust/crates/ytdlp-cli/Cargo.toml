@@ -12,4 +12,6 @@ serde_json.workspace = true
 yt-dlp-core = { path = "../ytdlp-core" }
 yt-dlp-downloader = { path = "../ytdlp-downloader" }
 yt-dlp-extractor = { path = "../ytdlp-extractor" }
+yt-dlp-javascript = { path = "../ytdlp-javascript" }
 yt-dlp-networking = { path = "../ytdlp-networking" }
+yt-dlp-postprocessor = { path = "../ytdlp-postprocessor" }
