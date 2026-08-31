@@ -97,6 +97,8 @@ impl ExtractorRegistry {
                 registry.register(VodPlatformExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AliExpressLiveIE" {
                 registry.register(AliExpressLiveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FczenitIE" {
+                registry.register(FczenitExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {
