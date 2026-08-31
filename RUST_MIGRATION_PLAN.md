@@ -221,6 +221,7 @@ self-update behavior.
 - [x] native Bild.de JSON clip/source extractor
 - [x] native FilmArchiv.at deterministic CDN/HLS extractor
 - [x] native Netzkino Next.js/CMS movie extractor
+- [x] native UTV Strasbourg progressive-video extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor

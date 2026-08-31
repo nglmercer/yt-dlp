@@ -10,5 +10,6 @@ include!("media_parts/screen9.rs");
 include!("media_parts/bild.rs");
 include!("media_parts/filmarchiv.rs");
 include!("media_parts/netzkino.rs");
+include!("media_parts/unistra.rs");
 include!("media_parts/video.rs");
 include!("media_parts/stream_cz.rs");

@@ -199,6 +199,8 @@ impl ExtractorRegistry {
                 registry.register(FilmArchivExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NetzkinoIE" {
                 registry.register(NetzkinoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "UnistraIE" {
+                registry.register(UnistraExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FathomIE" {
                 registry.register(FathomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
