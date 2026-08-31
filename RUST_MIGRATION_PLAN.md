@@ -218,6 +218,7 @@ self-update behavior.
 - [x] native Fathom share-page/API-state HLS extractor
 - [x] native Golem XML player/configuration extractor
 - [x] native Screen9 embed-configuration extractor
+- [x] native Bild.de JSON clip/source extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
