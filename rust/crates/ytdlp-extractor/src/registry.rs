@@ -109,6 +109,8 @@ impl ExtractorRegistry {
                 registry.register(CharlieRoseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ElTreceTVIE" {
                 registry.register(ElTreceTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Canalc2IE" {
+                registry.register(Canalc2Extractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {

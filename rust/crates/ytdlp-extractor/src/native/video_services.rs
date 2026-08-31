@@ -13,4 +13,5 @@ include!("video_services_parts/baidu.rs");
 include!("video_services_parts/footyroom.rs");
 include!("video_services_parts/charlierose.rs");
 include!("video_services_parts/eltrecetv.rs");
+include!("video_services_parts/canalc2.rs");
 include!("video_services_parts/fathom.rs");

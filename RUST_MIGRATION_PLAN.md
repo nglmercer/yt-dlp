@@ -237,6 +237,7 @@ self-update behavior.
 - [x] native FootyRoom playlist with Streamable URL entries
 - [x] native Charlie Rose HTML5 player extractor with WebVTT subtitles
 - [x] native El Trece TV Fusion/HLS extractor
+- [x] native CanalC2 archive-page media extractor with RTMP TODO metadata
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
