@@ -226,6 +226,7 @@ self-update behavior.
 - [x] native NonkTube HTML5-video extractor
 - [x] native LoveHomePorn Nuevo XML extractor
 - [x] native Angel Studios JSON-LD/HLS extractor
+- [x] native Newsy page-data/HLS extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
