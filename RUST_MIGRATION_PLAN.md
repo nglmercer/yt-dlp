@@ -207,6 +207,7 @@ self-update behavior.
 - [x] native Soundgasm audio and profile playlist extractors
 - [x] native Imgur animated media and gallery/album extractors
 - [x] native NineGag API/animated-media extractor
+- [x] native MyVidster videolink redirect extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor

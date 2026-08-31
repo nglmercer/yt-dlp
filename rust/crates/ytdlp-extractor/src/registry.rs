@@ -173,6 +173,8 @@ impl ExtractorRegistry {
                 registry.register(ImgurExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NineGagIE" {
                 registry.register(NineGagExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MyVidsterIE" {
+                registry.register(MyVidsterExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
                 registry.register(EbaumsWorldExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FuyinTVIE" {
