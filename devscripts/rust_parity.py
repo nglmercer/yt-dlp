@@ -182,6 +182,14 @@ def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
         variant = None
         variant_pending = False
         segments = []
+        segment_ranges = []
+        pending_range = None
+        previous_range = None
+
+        def parse_byte_range(value):
+            length, _, offset = value.strip('"').partition('@')
+            return int(length), int(offset) if offset else None
+
         for line in lines:
             if line.startswith('#EXT-X-STREAM-INF:'):
                 variant_pending = True
@@ -189,6 +197,15 @@ def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
                 match = re.search(r'URI="([^"]+)"', line)
                 if match:
                     segments.append(urllib.parse.urljoin(base_url, match.group(1)))
+                    range_match = re.search(r'BYTERANGE="?([^,]+)"?', line)
+                    segment_ranges.append(
+                        None if not range_match else {
+                            'start': parse_byte_range(range_match.group(1))[1] or 0,
+                            'length': parse_byte_range(range_match.group(1))[0],
+                        })
+                    previous_range = None
+            elif line.startswith('#EXT-X-BYTERANGE:'):
+                pending_range = parse_byte_range(line.split(':', 1)[1])
             elif line.startswith('#'):
                 continue
             else:
@@ -197,8 +214,25 @@ def downloader_manifest_reference(case: dict[str, object]) -> dict[str, object]:
                     variant = target
                     variant_pending = False
                 elif not variant_pending:
+                    byte_range = None
+                    if pending_range:
+                        length, offset = pending_range
+                        start = offset
+                        if start is None and previous_range and previous_range[0] == target:
+                            start = previous_range[1]
+                        start = start or 0
+                        byte_range = {'start': start, 'length': length}
+                        previous_range = (target, start + length)
+                    else:
+                        previous_range = None
                     segments.append(target)
-        return {'variant': variant, 'segments': segments}
+                    segment_ranges.append(byte_range)
+                    pending_range = None
+        return {
+            'variant': variant,
+            'segments': segments,
+            'segment_ranges': segment_ranges,
+        }
     if case['kind'] == 'dash':
         return {'segments': _reference_dash_segments(base_url, body)}
     raise ValueError(f'unknown downloader fixture kind: {case["kind"]}')
@@ -372,6 +406,8 @@ def main() -> int:
                 'concurrent_fragments': opts.concurrent_fragment_downloads,
                 'ignoreconfig': opts.ignoreconfig,
                 'config_locations': opts.config_locations,
+                'download_archive': opts.download_archive,
+                'cookiefile': opts.cookiefile,
             })
 
     actual = run_rust(args.rust_bin, args.operation, values)

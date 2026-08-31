@@ -131,6 +131,7 @@ self-update behavior.
 - [x] redirect method policy, relative targets, and loop detection
 - [x] HTTPS/proxy-capable handler with compression decoding
 - [x] RFC 6265 cookie-jar state across requests and redirects
+- [x] native Netscape cookie-file load/save and CLI cookie-file options
 - [x] response framing for content-length, chunked, and close-delimited bodies
 - [x] native request director with direct and secondary native handlers
 - [x] typed Rust CLI option model and deterministic parser slice
@@ -168,6 +169,7 @@ self-update behavior.
 - [x] native Audiomack song API extractor
 - [x] native Aitube Next-data/HLS extractor
 - [x] native HLS media-playlist parsing, segment concatenation, and retries
+- [x] native HLS byte-range parsing and Range requests
 - [x] native DASH SegmentList parsing and concatenation
 - [x] native DASH SegmentTemplate/SegmentTimeline expansion
 - [x] bounded concurrent fragment assembly with ordered output and retries
@@ -186,6 +188,7 @@ self-update behavior.
 - [x] native `--get-url`, `--get-title`, `--get-id`, `--get-thumbnail`, and `--get-duration`
 - [x] native `--write-info-json` output beside the selected media path
 - [x] native multi-URL execution and `--batch-file` input for the download loop
+- [x] native download archive persistence, duplicate skipping, and CLI option parity
 - [x] native playlist selection for single-entry output, -j, -J, and ranges
 - [x] native Streamable AJAX extractor with multi-format metadata
 - [x] native Newgrounds media, collection, search, and user listing extractors
@@ -249,8 +252,7 @@ self-update behavior.
 - [x] native Daystar Lightcast configuration/HLS extractor
 - [x] native DCTP versioned REST/API extractor
 
-Next: add native downloader differential fixtures, expand the base
-extractor/result contracts, port the remaining FFmpeg operations and option
+Next: expand the base extractor/result contracts, port the remaining FFmpeg operations and option
 groups, wire EJS challenge batches through the Rust runtime adapter, and
 continue protocol coverage. Python remains only a test oracle and is never
 called by the product binary.

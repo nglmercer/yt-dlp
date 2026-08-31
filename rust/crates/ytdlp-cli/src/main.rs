@@ -5,7 +5,7 @@ use std::io::{self, BufRead, Read, Write};
 use std::path::PathBuf;
 
 use cli::{ParseResult, parse_args, parse_configured_args, rust_supported_option_aliases};
-use yt_dlp_core::{INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
+use yt_dlp_core::{DownloadArchive, INITIAL_CAPABILITIES, InfoDict, MIGRATION_VERSION};
 use yt_dlp_core::{format_bytes, render_output_template};
 use yt_dlp_downloader::{
     DirectDownloader, DownloadOptions, DownloadResult, parse_dash_mpd, parse_hls_playlist,
@@ -63,6 +63,8 @@ fn print_help() {
     println!("  -f, --format, --all-formats, -S, --format-sort, --output");
     println!("  -g, --get-url, -e, --get-title, --get-id, --get-thumbnail, --get-duration");
     println!("  --write-info-json, --batch-file");
+    println!("  --download-archive, --no-download-archive");
+    println!("  --cookies, --no-cookies");
     println!("  --extract-audio, --audio-format, --remux-video, --ffmpeg-location");
     println!("  --no-playlist, --yes-playlist, --skip-download, --no-simulate");
     println!("  --native-request performs an opt-in raw request using the Rust network stack");
@@ -344,6 +346,12 @@ fn downloader_manifests(input: serde_json::Value) -> Result<serde_json::Value, S
             Ok(serde_json::json!({
                 "variant": playlist.variant,
                 "segments": playlist.segments,
+                "segment_ranges": playlist.segment_ranges.iter().map(|range| {
+                    range.as_ref().map(|range| serde_json::json!({
+                        "start": range.start,
+                        "length": range.length,
+                    }))
+                }).collect::<Vec<_>>(),
             }))
         }
         "dash" => {
@@ -959,10 +967,30 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
     let urls = native_input_urls(&options)?;
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
     let extraction_context = ExtractionContext::native();
+    let cookie_path = options.cookiefile.as_deref().map(PathBuf::from);
+    if let Some(path) = cookie_path.as_deref() {
+        extraction_context
+            .cookie_jar()
+            .lock()
+            .map_err(|_| "cookie jar lock poisoned".to_owned())?
+            .load_netscape_file(path)
+            .map_err(|error| error.to_string())?;
+    }
+    let archive_path = options.download_archive.as_deref().map(PathBuf::from);
+    let mut archive =
+        DownloadArchive::open(archive_path.as_deref()).map_err(|error| error.to_string())?;
     for url in urls {
         let mut per_url = options.clone();
         per_url.urls = vec![url];
-        native_download_one(&per_url, &registry, &extraction_context)?;
+        native_download_one(&per_url, &registry, &extraction_context, &mut archive)?;
+    }
+    if let Some(path) = cookie_path.as_deref() {
+        extraction_context
+            .cookie_jar()
+            .lock()
+            .map_err(|_| "cookie jar lock poisoned".to_owned())?
+            .save_netscape_file(path)
+            .map_err(|error| error.to_string())?;
     }
     Ok(())
 }
@@ -971,14 +999,16 @@ fn native_download_one(
     options: &cli::CliOptions,
     registry: &ExtractorRegistry,
     extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
 ) -> Result<(), String> {
-    native_download_one_with_redirect_depth(options, registry, extraction_context, 0)
+    native_download_one_with_redirect_depth(options, registry, extraction_context, archive, 0)
 }
 
 fn native_download_one_with_redirect_depth(
     options: &cli::CliOptions,
     registry: &ExtractorRegistry,
     extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
     redirect_depth: usize,
 ) -> Result<(), String> {
     if redirect_depth >= 20 {
@@ -991,11 +1021,18 @@ fn native_download_one_with_redirect_depth(
     let extractor = registry
         .find(url)
         .ok_or_else(|| format!("no extractor matched URL: {url}"))?;
+    let extractor_key = extractor.descriptor().key.clone();
     let extraction = extractor
         .extract_with_context(url, extraction_context)
         .map_err(|error| error.to_string())?;
     match extraction {
-        ExtractorResult::Single(info) => native_download_info(options, &info, extraction_context),
+        ExtractorResult::Single(info) => native_download_info(
+            options,
+            &info,
+            extraction_context,
+            archive,
+            Some(&extractor_key),
+        ),
         ExtractorResult::Redirect { url, .. } => {
             let mut redirected = options.clone();
             redirected.urls = vec![url];
@@ -1003,12 +1040,18 @@ fn native_download_one_with_redirect_depth(
                 &redirected,
                 registry,
                 extraction_context,
+                archive,
                 redirect_depth + 1,
             )
         }
-        ExtractorResult::Playlist { info, entries } => {
-            native_download_playlist(options, info, entries, extraction_context)
-        }
+        ExtractorResult::Playlist { info, entries } => native_download_playlist(
+            options,
+            info,
+            entries,
+            extraction_context,
+            archive,
+            Some(&extractor_key),
+        ),
     }
 }
 
@@ -1017,6 +1060,8 @@ fn native_download_playlist(
     mut info: InfoDict,
     entries: Vec<InfoDict>,
     extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
+    fallback_extractor: Option<&str>,
 ) -> Result<(), String> {
     if options.noplaylist {
         return Err(
@@ -1054,7 +1099,13 @@ fn native_download_playlist(
                 entries.len()
             );
         }
-        native_download_info(options, &entry, extraction_context)?;
+        native_download_info(
+            options,
+            &entry,
+            extraction_context,
+            archive,
+            fallback_extractor,
+        )?;
     }
     Ok(())
 }
@@ -1063,6 +1114,8 @@ fn native_download_info(
     options: &cli::CliOptions,
     info: &InfoDict,
     extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
+    fallback_extractor: Option<&str>,
 ) -> Result<(), String> {
     if options.dumpjson || options.dump_single_json {
         return print_info_json(&info);
@@ -1087,6 +1140,17 @@ fn native_download_info(
     if requested_fields || options.skip_download {
         if let Some(info_path) = info_path.as_ref() {
             eprintln!("[info] {}", info_path.display());
+        }
+        return Ok(());
+    }
+    if archive.contains_info(info, fallback_extractor) {
+        if !options.quiet.unwrap_or(false) {
+            eprintln!(
+                "[download] {} is already present in the download archive",
+                archive
+                    .id_for_info(info, fallback_extractor)
+                    .unwrap_or_else(|| "item".to_owned())
+            );
         }
         return Ok(());
     }
@@ -1149,6 +1213,11 @@ fn native_download_info(
         } else {
             None
         };
+    if !result.simulated && !options.skip_download {
+        archive
+            .record_info(info, fallback_extractor)
+            .map_err(|error| error.to_string())?;
+    }
     if options.dumpjson || options.dump_single_json {
         let mut output_json = download_result_json(&result);
         if let Some(postprocessed) = postprocessed {

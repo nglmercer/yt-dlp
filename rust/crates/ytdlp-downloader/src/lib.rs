@@ -210,11 +210,18 @@ impl DirectDownloader {
             .segments
             .iter()
             .enumerate()
-            .map(|(index, segment)| {
+            .zip(playlist.segment_ranges.iter())
+            .map(|((index, segment), range)| {
                 let mut segment_request = request.clone();
                 segment_request.set_url(segment);
                 segment_request.set_data(None);
                 segment_request.set_method("GET")?;
+                if let Some(range) = range {
+                    segment_request.headers_mut().set(
+                        "Range",
+                        format!("bytes={}-{}", range.start, range.end_inclusive()?),
+                    );
+                }
                 Ok(Fragment {
                     index,
                     request: segment_request,
@@ -379,9 +386,24 @@ impl DirectDownloader {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ByteRange {
+    pub start: u64,
+    pub length: u64,
+}
+
+impl ByteRange {
+    fn end_inclusive(&self) -> Result<u64, DownloadError> {
+        self.start
+            .checked_add(self.length.saturating_sub(1))
+            .ok_or_else(|| DownloadError::InvalidPlaylist("byte range exceeds u64".to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HlsPlaylist {
     pub variant: Option<String>,
     pub segments: Vec<String>,
+    pub segment_ranges: Vec<Option<ByteRange>>,
 }
 
 fn quoted_attribute(line: &str, name: &str) -> Option<String> {
@@ -398,6 +420,27 @@ fn quoted_attribute(line: &str, name: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
+fn parse_hls_byte_range(value: &str) -> Result<(u64, Option<u64>), DownloadError> {
+    let value = value.trim().trim_matches('"');
+    let (length, offset) = value.split_once('@').unwrap_or((value, ""));
+    let length = length.parse::<u64>().map_err(|_| {
+        DownloadError::InvalidPlaylist(format!("invalid HLS byte-range length: {value}"))
+    })?;
+    if length == 0 {
+        return Err(DownloadError::InvalidPlaylist(
+            "HLS byte range has zero length".to_owned(),
+        ));
+    }
+    let offset = (!offset.is_empty())
+        .then(|| {
+            offset.parse::<u64>().map_err(|_| {
+                DownloadError::InvalidPlaylist(format!("invalid HLS byte-range offset: {value}"))
+            })
+        })
+        .transpose()?;
+    Ok((length, offset))
+}
+
 pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, DownloadError> {
     let text = String::from_utf8_lossy(body);
     if !text.lines().any(|line| line.trim() == "#EXTM3U") {
@@ -411,6 +454,9 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
     let mut variant_pending = false;
     let mut variant = None;
     let mut segments = Vec::new();
+    let mut segment_ranges = Vec::new();
+    let mut pending_range = None;
+    let mut previous_range: Option<(String, u64)> = None;
     for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
         if line.starts_with("#EXT-X-KEY:") {
             let method = quoted_attribute(line, "METHOD").unwrap_or_default();
@@ -422,9 +468,10 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
             continue;
         }
         if line.starts_with("#EXT-X-BYTERANGE:") {
-            return Err(DownloadError::Unsupported(
-                "HLS byte ranges are not implemented".to_owned(),
-            ));
+            pending_range = Some(parse_hls_byte_range(
+                line.split_once(':').map_or("", |(_, value)| value),
+            )?);
+            continue;
         }
         if line == "#EXT-X-STREAM-INF:" || line.starts_with("#EXT-X-STREAM-INF:") {
             variant_pending = true;
@@ -438,7 +485,16 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
                 let url = base.join(&uri).map_err(|error| {
                     DownloadError::InvalidPlaylist(format!("invalid segment URL: {error}"))
                 })?;
+                let range = quoted_attribute(line, "BYTERANGE")
+                    .map(|value| parse_hls_byte_range(&value))
+                    .transpose()?
+                    .map(|(length, offset)| ByteRange {
+                        start: offset.unwrap_or(0),
+                        length,
+                    });
                 segments.push(url.to_string());
+                segment_ranges.push(range);
+                previous_range = None;
             }
             continue;
         }
@@ -450,7 +506,29 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
             variant = Some(url.to_string());
             variant_pending = false;
         } else if !variant_pending {
+            let range = pending_range
+                .take()
+                .map(|(length, offset)| {
+                    let start = offset
+                        .or_else(|| {
+                            previous_range
+                                .as_ref()
+                                .filter(|(previous_url, _)| previous_url == &url.to_string())
+                                .map(|(_, end)| *end)
+                        })
+                        .unwrap_or(0);
+                    let end = start.checked_add(length).ok_or_else(|| {
+                        DownloadError::InvalidPlaylist("HLS byte range exceeds u64".to_owned())
+                    })?;
+                    previous_range = Some((url.to_string(), end));
+                    Ok::<ByteRange, DownloadError>(ByteRange { start, length })
+                })
+                .transpose()?;
+            if range.is_none() {
+                previous_range = None;
+            }
             segments.push(url.to_string());
+            segment_ranges.push(range);
         }
     }
     if variant.is_none() && segments.is_empty() {
@@ -458,7 +536,11 @@ pub fn parse_hls_playlist(base_url: &str, body: &[u8]) -> Result<HlsPlaylist, Do
             "playlist contains no media segments".to_owned(),
         ));
     }
-    Ok(HlsPlaylist { variant, segments })
+    Ok(HlsPlaylist {
+        variant,
+        segments,
+        segment_ranges,
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -991,6 +1073,30 @@ mod tests {
         assert_eq!(media.segments.len(), 2);
         assert_eq!(media.segments[0], "http://example.test/video/init.mp4");
         assert_eq!(media.segments[1], "http://example.test/video/part.ts");
+        assert_eq!(media.segment_ranges, [None, None]);
+
+        let byterange = parse_hls_playlist(
+            "http://example.test/video/byterange.m3u8",
+            b"#EXTM3U\n#EXT-X-MAP:URI=\"init.mp4\",BYTERANGE=\"4@0\"\n#EXT-X-BYTERANGE:3@4\n#EXTINF:1,\nmedia.mp4\n#EXT-X-BYTERANGE:2\n#EXTINF:1,\nmedia.mp4\n",
+        )
+        .unwrap();
+        assert_eq!(
+            byterange.segment_ranges,
+            [
+                Some(ByteRange {
+                    start: 0,
+                    length: 4
+                }),
+                Some(ByteRange {
+                    start: 4,
+                    length: 3
+                }),
+                Some(ByteRange {
+                    start: 7,
+                    length: 2
+                }),
+            ]
+        );
 
         let master = parse_hls_playlist(
             "http://example.test/master.m3u8",
@@ -1118,6 +1224,80 @@ mod tests {
         assert_eq!(fs::read(&output).unwrap(), b"INITONETWO");
         fs::remove_file(output).unwrap();
         server.join().unwrap();
+    }
+
+    #[test]
+    fn hls_downloader_sends_byte_ranges_for_reused_media_urls() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let mut requests = Vec::new();
+            for _ in 0..3 {
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut request = [0; 2048];
+                let count = std::io::Read::read(&mut stream, &mut request).unwrap();
+                let request = String::from_utf8_lossy(&request[..count]).into_owned();
+                let path = request
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap_or_default()
+                    .to_owned();
+                requests.push(request);
+                let (status, body) = match path.as_str() {
+                    "/playlist.m3u8" => (
+                        "200 OK",
+                        b"#EXTM3U\n#EXT-X-BYTERANGE:3@4\n#EXTINF:1,\nmedia.mp4\n#EXT-X-BYTERANGE:2\n#EXTINF:1,\nmedia.mp4\n".to_vec(),
+                    ),
+                    "/media.mp4" => {
+                        let range = requests.last().and_then(|request| {
+                            request
+                                .lines()
+                                .find(|line| line.starts_with("Range:"))
+                                .map(str::to_owned)
+                        });
+                        match range.as_deref() {
+                            Some("Range: bytes=4-6") => ("206 Partial Content", b"abc".to_vec()),
+                            Some("Range: bytes=7-8") => ("206 Partial Content", b"de".to_vec()),
+                            _ => ("416 Range Not Satisfiable", Vec::new()),
+                        }
+                    }
+                    _ => ("404 Not Found", Vec::new()),
+                };
+                let response = format!(
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                );
+                stream.write_all(response.as_bytes()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+            requests
+        });
+
+        let output = std::env::temp_dir().join(format!(
+            "yt-dlp-rs-hls-range-{}-{}.mp4",
+            std::process::id(),
+            address.port()
+        ));
+        let result = DirectDownloader::native()
+            .download_hls(
+                &Request::new(format!("http://{address}/playlist.m3u8")),
+                Some(&output),
+                &DownloadOptions {
+                    simulate: false,
+                    overwrite: true,
+                    resume: false,
+                    retries: 0,
+                    concurrent: 1,
+                },
+            )
+            .unwrap();
+
+        let requests = server.join().unwrap();
+        assert!(requests[1].contains("Range: bytes=4-6\r\n"));
+        assert!(requests[2].contains("Range: bytes=7-8\r\n"));
+        assert_eq!(result.bytes, 5);
+        assert_eq!(fs::read(&output).unwrap(), b"abcde");
+        fs::remove_file(output).unwrap();
     }
 
     #[test]

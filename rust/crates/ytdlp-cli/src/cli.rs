@@ -54,6 +54,8 @@ pub struct CliOptions {
     pub concurrent_fragments: i64,
     pub ignoreconfig: Option<bool>,
     pub config_locations: Option<Vec<String>>,
+    pub download_archive: Option<String>,
+    pub cookiefile: Option<String>,
 }
 
 /// Option spellings understood by the typed Rust parser. The generated source manifest is
@@ -73,6 +75,10 @@ pub fn rust_supported_option_aliases() -> &'static [&'static str] {
         "--no-remote-components",
         "--ignore-config",
         "--no-config",
+        "--download-archive",
+        "--no-download-archive",
+        "--cookies",
+        "--no-cookies",
         "--no-config-locations",
         "--config-locations",
         "--user-agent",
@@ -245,6 +251,8 @@ impl Default for CliOptions {
             concurrent_fragments: 1,
             ignoreconfig: None,
             config_locations: None,
+            download_archive: None,
+            cookiefile: None,
         }
     }
 }
@@ -736,6 +744,16 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                 )?),
                 "--no-remote-components" => options.remote_components.clear(),
                 "--ignore-config" | "--no-config" => options.ignoreconfig = Some(true),
+                "--download-archive" => {
+                    options.download_archive =
+                        Some(option_value(args, &mut index, option, inline_value)?);
+                }
+                "--no-download-archive" => options.download_archive = None,
+                "--cookies" => {
+                    options.cookiefile =
+                        Some(option_value(args, &mut index, option, inline_value)?);
+                }
+                "--no-cookies" => options.cookiefile = None,
                 "--no-config-locations" => options.config_locations = None,
                 "--config-locations" => {
                     options

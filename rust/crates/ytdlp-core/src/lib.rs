@@ -11,6 +11,10 @@ use serde_json::Value;
 use std::fmt;
 use std::sync::LazyLock;
 
+mod archive;
+
+pub use archive::{ArchiveError, DownloadArchive};
+
 pub const MIGRATION_VERSION: &str = "0.0.0";
 
 const BYTE_SUFFIXES: [&str; 9] = ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi"];

@@ -99,5 +99,19 @@
     "--get-duration",
     "--write-info-json",
     "video"
+  ],
+  [
+    "--download-archive",
+    "archive.txt",
+    "--no-download-archive",
+    "--download-archive=final-archive.txt",
+    "video"
+  ],
+  [
+    "--cookies",
+    "cookies.txt",
+    "--no-cookies",
+    "--cookies=cookies-final.txt",
+    "video"
   ]
 ]
