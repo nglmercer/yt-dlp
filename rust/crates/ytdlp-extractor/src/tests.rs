@@ -22,4 +22,5 @@ include!("tests_parts/golem.rs");
 include!("tests_parts/screen9.rs");
 include!("tests_parts/bild.rs");
 include!("tests_parts/filmarchiv.rs");
+include!("tests_parts/netzkino.rs");
 include!("tests_parts/fathom.rs");
