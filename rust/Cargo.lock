@@ -1587,6 +1587,7 @@ name = "yt-dlp-extractor"
 version = "0.0.0"
 dependencies = [
  "fancy-regex",
+ "quick-xml",
  "regex",
  "serde",
  "serde_json",
