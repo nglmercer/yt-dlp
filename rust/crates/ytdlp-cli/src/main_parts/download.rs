@@ -65,13 +65,20 @@ fn native_download_one_with_redirect_depth(
         .extract_with_context(url, extraction_context)
         .map_err(|error| error.to_string())?;
     match extraction {
-        ExtractorResult::Single(info) => native_download_info(
-            options,
-            &info,
-            extraction_context,
-            archive,
-            Some(&extractor_key),
-        ),
+        ExtractorResult::Single(info) => {
+            let info = if native_is_url_result(&info) {
+                native_resolve_playlist_entry(registry, extraction_context, &info, 0)?
+            } else {
+                info
+            };
+            native_download_info(
+                options,
+                &info,
+                extraction_context,
+                archive,
+                Some(&extractor_key),
+            )
+        }
         ExtractorResult::Redirect { url, .. } => {
             let mut redirected = options.clone();
             redirected.urls = vec![url];
@@ -179,7 +186,18 @@ fn native_resolve_playlist_entry(
         .extract_with_context(target_url, extraction_context)
         .map_err(|error| error.to_string())?;
     let resolved = match extraction {
-        ExtractorResult::Single(info) => info,
+        ExtractorResult::Single(info) => {
+            if native_is_url_result(&info) {
+                native_resolve_playlist_entry(
+                    registry,
+                    extraction_context,
+                    &info,
+                    redirect_depth + 1,
+                )?
+            } else {
+                info
+            }
+        }
         ExtractorResult::Redirect { url, .. } => {
             let mut redirect = InfoDict::new();
             redirect.insert("_type", serde_json::json!("url"));
@@ -198,6 +216,13 @@ fn native_resolve_playlist_entry(
         }
     };
     Ok(native_merge_playlist_entry_metadata(entry, resolved))
+}
+
+fn native_is_url_result(info: &InfoDict) -> bool {
+    matches!(
+        info.get_str("_type"),
+        Some("url" | "url_transparent")
+    )
 }
 
 fn native_merge_playlist_entry_metadata(source: &InfoDict, mut resolved: InfoDict) -> InfoDict {

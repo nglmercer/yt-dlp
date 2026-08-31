@@ -85,6 +85,10 @@ impl ExtractorRegistry {
                 registry.register(SkylineWebcamsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "WebcameraplIE" {
                 registry.register(WebcameraplExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "AltCensoredIE" {
+                registry.register(AltCensoredExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "AltCensoredChannelIE" {
+                registry.register(AltCensoredChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

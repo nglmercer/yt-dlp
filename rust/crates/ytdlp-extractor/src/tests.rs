@@ -41,4 +41,5 @@ include!("tests_parts/eltrecetv.rs");
 include!("tests_parts/canalc2.rs");
 include!("tests_parts/epoch.rs");
 include!("tests_parts/harpodeon.rs");
+include!("tests_parts/altcensored.rs");
 include!("tests_parts/fathom.rs");
