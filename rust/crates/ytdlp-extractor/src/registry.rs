@@ -181,6 +181,8 @@ impl ExtractorRegistry {
                 registry.register(EbayExtractor::new(descriptor)?)?;
             } else if descriptor.key == "SenIE" {
                 registry.register(SenExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "RoyaLiveIE" {
+                registry.register(RoyaLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
                 registry.register(EbaumsWorldExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FuyinTVIE" {

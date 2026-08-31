@@ -7,3 +7,4 @@ include!("broadcast_parts/radio_de.rs");
 include!("broadcast_parts/radio_zet.rs");
 include!("broadcast_parts/worldstar.rs");
 include!("broadcast_parts/this_american_life.rs");
+include!("broadcast_parts/roya.rs");
