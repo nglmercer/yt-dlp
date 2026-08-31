@@ -1,3 +1,4 @@
 include!("video_services_parts/vidyard.rs");
 include!("video_services_parts/shared_media.rs");
 include!("video_services_parts/shared_html.rs");
+include!("video_services_parts/fathom.rs");

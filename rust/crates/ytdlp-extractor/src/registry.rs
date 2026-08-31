@@ -189,6 +189,8 @@ impl ExtractorRegistry {
                 registry.register(EttuTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ElonetIE" {
                 registry.register(ElonetExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FathomIE" {
+                registry.register(FathomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
                 registry.register(EbaumsWorldExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FuyinTVIE" {

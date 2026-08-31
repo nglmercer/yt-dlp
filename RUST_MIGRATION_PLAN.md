@@ -215,6 +215,7 @@ self-update behavior.
 - [x] native ReverbNation song API/audio extractor
 - [x] native ETTU TV player-settings/HLS extractor
 - [x] native Elonet embedded HLS/DASH extractor
+- [x] native Fathom share-page/API-state HLS extractor
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor
