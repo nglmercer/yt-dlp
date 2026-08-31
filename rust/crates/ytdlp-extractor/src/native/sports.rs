@@ -6,3 +6,4 @@ include!("sports_parts/arnes.rs");
 include!("sports_parts/cjsw.rs");
 include!("sports_parts/daystar.rs");
 include!("sports_parts/dctp.rs");
+include!("sports_parts/ettu_tv.rs");

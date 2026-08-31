@@ -16,3 +16,4 @@ include!("tests_parts/ebay.rs");
 include!("tests_parts/sen.rs");
 include!("tests_parts/roya.rs");
 include!("tests_parts/reverbnation.rs");
+include!("tests_parts/ettu_tv.rs");
