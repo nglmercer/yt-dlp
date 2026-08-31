@@ -329,12 +329,13 @@ fn native_protocol_todo(
         _ if protocol.is_some_and(|protocol| {
             matches!(
                 protocol.to_ascii_lowercase().as_str(),
-                "f4m" | "hds" | "ism" | "isml" | "mss" | "rtmp" | "rtmps"
+                "f4m" | "hds" | "ism" | "isml" | "mss" | "rtmp" | "rtmps" | "smil"
             )
         }) => protocol.and_then(|protocol| match protocol.to_ascii_lowercase().as_str() {
             "f4m" | "hds" => Some("Adobe HDS/F4M"),
             "ism" | "isml" | "mss" => Some("Microsoft Smooth Streaming"),
             "rtmp" | "rtmps" => Some("RTMP"),
+            "smil" => Some("SMIL playlist"),
             _ => None,
         }),
         _ => match extension.as_deref() {

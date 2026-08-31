@@ -89,6 +89,10 @@ impl ExtractorRegistry {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
                 registry.register(NewsyExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ClubicIE" {
+                registry.register(ClubicExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MuenchenTVIE" {
+                registry.register(MuenchenTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {

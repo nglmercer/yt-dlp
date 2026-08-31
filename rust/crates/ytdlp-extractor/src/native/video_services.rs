@@ -3,4 +3,6 @@ include!("video_services_parts/shared_media.rs");
 include!("video_services_parts/shared_html.rs");
 include!("video_services_parts/angel.rs");
 include!("video_services_parts/newsy.rs");
+include!("video_services_parts/clubic.rs");
+include!("video_services_parts/muenchentv.rs");
 include!("video_services_parts/fathom.rs");

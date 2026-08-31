@@ -227,6 +227,8 @@ self-update behavior.
 - [x] native LoveHomePorn Nuevo XML extractor
 - [x] native Angel Studios JSON-LD/HLS extractor
 - [x] native Newsy page-data/HLS extractor
+- [x] native Clubic M6Web player-configuration extractor
+- [x] native münchen.tv live playlist extractor with SMIL TODO guard
 - [x] native EbaumsWorld XML player extractor
 - [x] native Fuyin TV JSON API extractor
 - [x] native CAM4 live HLS extractor

@@ -28,4 +28,6 @@ include!("tests_parts/cineteca.rs");
 include!("tests_parts/nuevo.rs");
 include!("tests_parts/angel.rs");
 include!("tests_parts/newsy.rs");
+include!("tests_parts/clubic.rs");
+include!("tests_parts/muenchentv.rs");
 include!("tests_parts/fathom.rs");

@@ -318,7 +318,97 @@ fn parse_common_javascript_value(value: &str) -> Option<serde_json::Value> {
     if let Ok(parsed) = serde_json::from_str(value) {
         return Some(parsed);
     }
+    let normalized = normalize_javascript_literal(value)?;
     let matcher = Regex::new(r#"([,{]\s*)([A-Za-z_$][A-Za-z0-9_$-]*)\s*:"#).ok()?;
-    let normalized = matcher.replace_all(value, "$1\"$2\":");
+    let normalized = matcher.replace_all(&normalized, "$1\"$2\":");
+    let normalized = remove_javascript_trailing_commas(&normalized);
     serde_json::from_str(&normalized).ok()
+}
+
+fn normalize_javascript_literal(value: &str) -> Option<String> {
+    let mut normalized = String::with_capacity(value.len());
+    let mut chars = value.chars().peekable();
+    let mut in_double_quote = false;
+    let mut in_single_quote = false;
+    while let Some(character) = chars.next() {
+        if in_double_quote {
+            normalized.push(character);
+            if character == '\\' {
+                normalized.push(chars.next()?);
+            } else if character == '"' {
+                in_double_quote = false;
+            }
+            continue;
+        }
+        if in_single_quote {
+            match character {
+                '\\' => {
+                    let escaped = chars.next()?;
+                    match escaped {
+                        '"' => normalized.push_str("\\\""),
+                        '\'' => normalized.push('\''),
+                        'b' | 'f' | 'n' | 'r' | 't' | 'u' => {
+                            normalized.push('\\');
+                            normalized.push(escaped);
+                        }
+                        _ => normalized.push(escaped),
+                    }
+                }
+                '\'' => {
+                    normalized.push('"');
+                    in_single_quote = false;
+                }
+                '"' => normalized.push_str("\\\""),
+                _ => normalized.push(character),
+            }
+            continue;
+        }
+        match character {
+            '"' => {
+                normalized.push(character);
+                in_double_quote = true;
+            }
+            '\'' => {
+                normalized.push('"');
+                in_single_quote = true;
+            }
+            _ => normalized.push(character),
+        }
+    }
+    (!in_double_quote && !in_single_quote).then_some(normalized)
+}
+
+fn remove_javascript_trailing_commas(value: &str) -> String {
+    let mut normalized = String::with_capacity(value.len());
+    let mut chars = value.chars().peekable();
+    let mut in_string = false;
+    while let Some(character) = chars.next() {
+        if in_string {
+            normalized.push(character);
+            if character == '\\' {
+                if let Some(escaped) = chars.next() {
+                    normalized.push(escaped);
+                }
+            } else if character == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+        if character == '"' {
+            in_string = true;
+            normalized.push(character);
+            continue;
+        }
+        if character == ',' {
+            let mut lookahead = chars.clone();
+            while lookahead.peek().is_some_and(|next| next.is_whitespace()) {
+                lookahead.next();
+            }
+            if lookahead.peek().is_some_and(|next| matches!(next, ']' | '}')) {
+                continue;
+            }
+        }
+        normalized.push(character);
+    }
+    normalized
 }

@@ -138,6 +138,12 @@ mod native_tests {
             .as_deref()
             .is_some_and(|error| error.contains("Adobe HDS/F4M")));
 
+        let smil_error =
+            native_protocol_todo("https://media.test/video.smil", Some("mp4"), Some("smil"));
+        assert!(smil_error
+            .as_deref()
+            .is_some_and(|error| error.contains("SMIL playlist")));
+
         assert!(native_hls_protocol("m3u8_native"));
         assert!(native_dash_protocol("http_dash_segments"));
         assert!(
