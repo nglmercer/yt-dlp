@@ -253,6 +253,7 @@ self-update behavior.
 - [x] native CJSW episode audio extractor
 - [x] native Daystar Lightcast configuration/HLS extractor
 - [x] native DCTP versioned REST/API extractor
+- [x] native Art19 episode/RSS podcast extractor
 
 Next: expand the base extractor/result contracts, port the remaining FFmpeg operations and option
 groups, wire EJS challenge batches through the Rust runtime adapter, and

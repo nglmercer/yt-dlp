@@ -229,6 +229,8 @@ impl ExtractorRegistry {
                 registry.register(ThisAmericanLifeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "WorldStarHipHopIE" {
                 registry.register(WorldStarHipHopExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Art19IE" {
+                registry.register(Art19Extractor::new(descriptor)?)?;
             } else {
                 registry.register(DescriptorExtractor::from_patterns_lossy(
                     descriptor,

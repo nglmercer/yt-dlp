@@ -138,7 +138,7 @@ fn generated_manifest_preserves_extractor_inventory_and_order() {
         registry.iter().last().unwrap().descriptor().key,
         "GenericIE"
     );
-    assert_eq!(registry.native_implementation_count(), 93);
+    assert_eq!(registry.native_implementation_count(), 94);
 }
 
 #[test]
@@ -4337,4 +4337,90 @@ fn aitube_native_extractor_reads_next_data_and_hls_result() {
             .get_str("url")
             .is_some_and(|url| url.ends_with("/video"))
     );
+}
+
+#[test]
+fn art19_native_extractor_maps_player_and_rss_metadata() {
+    let extractor = Art19Extractor::new(ExtractorDescriptor::with_valid_urls(
+        "Art19IE",
+        "Art19",
+        vec![
+            r"https?://(?:www\.)?art19\.com/shows/[^/#?]+/episodes/(?P<id>[\da-f]{8}-?[\da-f]{4}-?[\da-f]{4}-?[\da-f]{4}-?[\da-f]{12})"
+                .to_owned(),
+            r"https?://rss\.art19\.com/episodes/(?P<id>[\da-f]{8}-?[\da-f]{4}-?[\da-f]{4}-?[\da-f]{4}-?[\da-f]{12})\.mp3"
+                .to_owned(),
+        ],
+        true,
+    ))
+    .unwrap();
+    let episode_id = "5ba1413c-48b8-472b-9cc3-cfd952340bdb";
+    let mut director = RequestDirector::new();
+    director.add_handler(RoutedHandler {
+        routes: vec![
+            (
+                format!("https://art19.com/episodes/{episode_id}"),
+                br#"{
+                    "episode": {
+                        "title": "Native Art19 episode",
+                        "description_plain": "Player description",
+                        "id": "5ba1413c-48b8-472b-9cc3-cfd952340bdb",
+                        "created_at": "2024-01-22T12:26:55Z",
+                        "released_at": "2024-01-22T12:31:15Z",
+                        "updated_at": "2024-01-22T12:34:35Z"
+                    }
+                }"#
+                .to_vec(),
+            ),
+            (
+                format!("https://rss.art19.com/episodes/{episode_id}.json"),
+                br#"{
+                    "content": {
+                        "episode_title": "Native RSS title",
+                        "episode_description_plain": "RSS description",
+                        "episode_id": "5ba1413c-48b8-472b-9cc3-cfd952340bdb",
+                        "episode_number": 582,
+                        "series_title": "Native series",
+                        "series_id": "series-1",
+                        "season_title": "Season 2",
+                        "season_id": "season-2",
+                        "season_number": 2,
+                        "cover_image": "https://cdn.example/cover.jpg",
+                        "duration": 527.4,
+                        "media": {
+                            "mp3": {"url": "https://cdn.example/episode.mp3"},
+                            "ogg": {"url": "https://cdn.example/episode.ogg"},
+                            "waveform_bin": {"url": "https://cdn.example/waveform.bin"}
+                        }
+                    }
+                }"#
+                .to_vec(),
+            ),
+        ],
+    });
+    let context = ExtractionContext::new(director, CookieJar::new().shared());
+    assert!(extractor.suitable(&format!("https://rss.art19.com/episodes/{episode_id}.mp3")));
+    let result = extractor
+        .extract_with_context(
+            &format!("https://art19.com/shows/example/episodes/{episode_id}"),
+            &context,
+        )
+        .unwrap()
+        .into_info_dict();
+
+    assert_eq!(result.get_str("id"), Some(episode_id));
+    assert_eq!(result.get_str("title"), Some("Native RSS title"));
+    assert_eq!(result.get_str("series"), Some("Native series"));
+    assert_eq!(result.get_i64("episode_number"), Some(582));
+    assert_eq!(result.get_f64("duration"), Some(527.4));
+    assert_eq!(
+        result.get_i64("timestamp"),
+        yt_dlp_core::parse_iso8601("2024-01-22T12:26:55Z")
+    );
+    let formats = result.get("formats").and_then(serde_json::Value::as_array);
+    assert_eq!(formats.map(Vec::len), Some(3));
+    assert!(formats.is_some_and(|formats| {
+        formats
+            .iter()
+            .all(|format| format.get("vcodec") == Some(&serde_json::json!("none")))
+    }));
 }
