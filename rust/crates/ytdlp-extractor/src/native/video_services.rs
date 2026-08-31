@@ -12,4 +12,5 @@ include!("video_services_parts/clipchamp.rs");
 include!("video_services_parts/baidu.rs");
 include!("video_services_parts/footyroom.rs");
 include!("video_services_parts/charlierose.rs");
+include!("video_services_parts/eltrecetv.rs");
 include!("video_services_parts/fathom.rs");
