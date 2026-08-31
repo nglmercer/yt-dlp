@@ -101,6 +101,8 @@ impl ExtractorRegistry {
                 registry.register(FczenitExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ClipchampIE" {
                 registry.register(ClipchampExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "BaiduVideoIE" {
+                registry.register(BaiduVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AlibabaIE" {
                 registry.register(AlibabaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MovingImageIE" {

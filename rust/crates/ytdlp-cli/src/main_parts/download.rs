@@ -85,6 +85,7 @@ fn native_download_one_with_redirect_depth(
         }
         ExtractorResult::Playlist { info, entries } => native_download_playlist(
             options,
+            registry,
             info,
             entries,
             extraction_context,
@@ -96,12 +97,17 @@ fn native_download_one_with_redirect_depth(
 
 fn native_download_playlist(
     options: &cli::CliOptions,
+    registry: &ExtractorRegistry,
     mut info: InfoDict,
     entries: Vec<InfoDict>,
     extraction_context: &ExtractionContext,
     archive: &mut DownloadArchive,
     fallback_extractor: Option<&str>,
 ) -> Result<(), String> {
+    let entries = entries
+        .iter()
+        .map(|entry| native_resolve_playlist_entry(registry, extraction_context, entry, 0))
+        .collect::<Result<Vec<_>, _>>()?;
     if options.noplaylist {
         return Err(
             "TODO: --no-playlist requires a single-item extractor view for this URL".to_owned(),
@@ -147,6 +153,64 @@ fn native_download_playlist(
         )?;
     }
     Ok(())
+}
+
+fn native_resolve_playlist_entry(
+    registry: &ExtractorRegistry,
+    extraction_context: &ExtractionContext,
+    entry: &InfoDict,
+    redirect_depth: usize,
+) -> Result<InfoDict, String> {
+    if entry.get_str("_type") != Some("url")
+        && entry.get_str("_type") != Some("url_transparent")
+    {
+        return Ok(entry.clone());
+    }
+    if redirect_depth >= 20 {
+        return Err("TODO: native playlist URL-result chain exceeded 20 levels".to_owned());
+    }
+    let target_url = entry
+        .get_str("url")
+        .ok_or_else(|| "TODO: native playlist URL result has no target URL".to_owned())?;
+    let extractor = registry
+        .find(target_url)
+        .ok_or_else(|| format!("no extractor matched playlist entry URL: {target_url}"))?;
+    let extraction = extractor
+        .extract_with_context(target_url, extraction_context)
+        .map_err(|error| error.to_string())?;
+    let resolved = match extraction {
+        ExtractorResult::Single(info) => info,
+        ExtractorResult::Redirect { url, .. } => {
+            let mut redirect = InfoDict::new();
+            redirect.insert("_type", serde_json::json!("url"));
+            redirect.insert("url", serde_json::json!(url));
+            native_resolve_playlist_entry(
+                registry,
+                extraction_context,
+                &redirect,
+                redirect_depth + 1,
+            )?
+        }
+        ExtractorResult::Playlist { .. } => {
+            return Err(
+                "TODO: nested native playlists inside URL results are not implemented".to_owned(),
+            );
+        }
+    };
+    Ok(native_merge_playlist_entry_metadata(entry, resolved))
+}
+
+fn native_merge_playlist_entry_metadata(source: &InfoDict, mut resolved: InfoDict) -> InfoDict {
+    let transparent = source.get_str("_type") == Some("url_transparent");
+    for (key, value) in source.iter() {
+        if matches!(key, "_type" | "url" | "ie_key") {
+            continue;
+        }
+        if transparent || !resolved.contains_key(key) {
+            resolved.insert(key, value.clone());
+        }
+    }
+    resolved
 }
 
 fn native_download_info(

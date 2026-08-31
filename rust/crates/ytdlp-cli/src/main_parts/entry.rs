@@ -202,4 +202,33 @@ mod native_tests {
         assert!(native_playlist_indices(Some("4-2"), 5).unwrap().is_empty());
         assert!(native_playlist_indices(Some("1:3:0"), 5).is_err());
     }
+
+    #[test]
+    fn native_playlist_url_results_resolve_and_merge_transparent_metadata() {
+        let mut registry = ExtractorRegistry::new();
+        registry
+            .register(GenericExtractor::new(ExtractorDescriptor::new(
+                "GenericIE",
+                "generic",
+                r"https?://cdn\.test/.*",
+                true,
+            )))
+            .unwrap();
+        let context = ExtractionContext::new(
+            RequestDirector::new(),
+            yt_dlp_networking::CookieJar::new().shared(),
+        );
+        let mut entry = InfoDict::new();
+        entry.insert("_type", serde_json::json!("url_transparent"));
+        entry.insert("url", serde_json::json!("https://cdn.test/episode.mp4"));
+        entry.insert("id", serde_json::json!("parent-id"));
+        entry.insert("title", serde_json::json!("Parent title"));
+
+        let resolved = native_resolve_playlist_entry(&registry, &context, &entry, 0).unwrap();
+        assert_eq!(resolved.get_str("id"), Some("parent-id"));
+        assert_eq!(resolved.get_str("title"), Some("Parent title"));
+        assert_eq!(resolved.get_str("url"), Some("https://cdn.test/episode.mp4"));
+        assert_eq!(resolved.get_str("ext"), Some("mp4"));
+        assert_eq!(resolved.get("direct"), Some(&serde_json::json!(true)));
+    }
 }
