@@ -195,6 +195,8 @@ impl ExtractorRegistry {
                 registry.register(Screen9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "BildIE" {
                 registry.register(BildExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FilmArchivIE" {
+                registry.register(FilmArchivExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FathomIE" {
                 registry.register(FathomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {
