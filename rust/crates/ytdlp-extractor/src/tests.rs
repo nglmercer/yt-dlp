@@ -19,4 +19,5 @@ include!("tests_parts/reverbnation.rs");
 include!("tests_parts/ettu_tv.rs");
 include!("tests_parts/elonet.rs");
 include!("tests_parts/golem.rs");
+include!("tests_parts/screen9.rs");
 include!("tests_parts/fathom.rs");

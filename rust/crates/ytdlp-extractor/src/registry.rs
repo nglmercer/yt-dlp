@@ -191,6 +191,8 @@ impl ExtractorRegistry {
                 registry.register(ElonetExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GolemIE" {
                 registry.register(GolemExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Screen9IE" {
+                registry.register(Screen9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FathomIE" {
                 registry.register(FathomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EbaumsWorldIE" {

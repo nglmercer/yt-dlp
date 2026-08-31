@@ -6,5 +6,6 @@ include!("media_parts/ebay.rs");
 include!("media_parts/sen.rs");
 include!("media_parts/elonet.rs");
 include!("media_parts/golem.rs");
+include!("media_parts/screen9.rs");
 include!("media_parts/video.rs");
 include!("media_parts/stream_cz.rs");
