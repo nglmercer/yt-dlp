@@ -1,0 +1,35 @@
+[
+  {
+    "url": "https://example.com"
+  },
+  {
+    "url": "https://example.com/form",
+    "data": "a=1"
+  },
+  {
+    "url": "https://example.com/upload",
+    "method": "put",
+    "data": "payload",
+    "headers": {
+      "x-dlp": " data ",
+      "Content-Length": "7",
+      "Content-Type": "custom"
+    }
+  },
+  {
+    "url": "https://example.com/no-body",
+    "headers": {
+      "Content-Length": "0",
+      "Content-Type": "custom"
+    }
+  },
+  {
+    "url": "https://фtest.example.com/ some spaceв?ä=c"
+  },
+  {
+    "url": "//example.com"
+  },
+  {
+    "url": "https://example.com/a/../b"
+  }
+]

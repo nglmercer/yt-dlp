@@ -1,0 +1,15 @@
+[package]
+name = "yt-dlp-rs"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+indexmap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+yt-dlp-core = { path = "../ytdlp-core" }
+yt-dlp-downloader = { path = "../ytdlp-downloader" }
+yt-dlp-extractor = { path = "../ytdlp-extractor" }
+yt-dlp-networking = { path = "../ytdlp-networking" }

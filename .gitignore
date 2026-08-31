@@ -89,6 +89,10 @@ secrets/
 updates_key.pem
 *.egg-info
 .tox
+
+# Rust
+/rust/target/
+
 *.class
 *.isorted
 *.stackdump
