@@ -328,6 +328,8 @@ impl ExtractorRegistry {
                 registry.register(HboExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HuyaVideoIE" {
                 registry.register(HuyaVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "InaIE" {
+                registry.register(InaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
