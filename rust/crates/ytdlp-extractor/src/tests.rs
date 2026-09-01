@@ -179,6 +179,7 @@ include!("tests_parts/manyvids.rs");
 include!("tests_parts/massengeschmack.rs");
 include!("tests_parts/maariv.rs");
 include!("tests_parts/medaltv.rs");
+include!("tests_parts/mediaite.rs");
 include!("tests_parts/mave.rs");
 include!("tests_parts/mbn.rs");
 include!("tests_parts/museai.rs");

@@ -156,6 +156,7 @@ include!("video_services_parts/manyvids.rs");
 include!("video_services_parts/massengeschmack.rs");
 include!("video_services_parts/maariv.rs");
 include!("video_services_parts/medaltv.rs");
+include!("video_services_parts/mediaite.rs");
 include!("video_services_parts/mbn.rs");
 include!("video_services_parts/museai.rs");
 include!("video_services_parts/musescore.rs");
