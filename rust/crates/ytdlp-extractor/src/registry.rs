@@ -390,6 +390,18 @@ impl ExtractorRegistry {
                 registry.register(KhanAcademyExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KhanAcademyUnitIE" {
                 registry.register(KhanAcademyUnitExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoAlbumIE" {
+                registry.register(KuwoAlbumExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoCategoryIE" {
+                registry.register(KuwoCategoryExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoChartIE" {
+                registry.register(KuwoChartExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoIE" {
+                registry.register(KuwoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoMvIE" {
+                registry.register(KuwoMvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KuwoSingerIE" {
+                registry.register(KuwoSingerExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
