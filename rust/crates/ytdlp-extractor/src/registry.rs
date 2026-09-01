@@ -149,6 +149,10 @@ impl ExtractorRegistry {
                 registry.register(DeuxMExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DeuxMNewsIE" {
                 registry.register(DeuxMExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DLiveVODIE" {
+                registry.register(DliveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DLiveStreamIE" {
+                registry.register(DliveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
