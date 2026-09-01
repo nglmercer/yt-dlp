@@ -176,6 +176,7 @@ include!("video_services_parts/mojevideo.rs");
 include!("video_services_parts/melonvod.rs");
 include!("video_services_parts/metacritic.rs");
 include!("video_services_parts/mzaalo.rs");
+include!("video_services_parts/murrtube.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");

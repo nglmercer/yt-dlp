@@ -484,6 +484,8 @@ impl ExtractorRegistry {
                 registry.register(MetacriticExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MzaaloIE" {
                 registry.register(MzaaloExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MurrtubeIE" {
+                registry.register(MurrtubeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {

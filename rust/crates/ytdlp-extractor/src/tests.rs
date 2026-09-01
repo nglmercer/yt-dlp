@@ -200,6 +200,7 @@ include!("tests_parts/mojevideo.rs");
 include!("tests_parts/melonvod.rs");
 include!("tests_parts/metacritic.rs");
 include!("tests_parts/mzaalo.rs");
+include!("tests_parts/murrtube.rs");
 include!("tests_parts/mixlr.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");
