@@ -466,6 +466,10 @@ impl ExtractorRegistry {
                 registry.register(MindsChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MindsGroupIE" {
                 registry.register(MindsGroupExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MangomoloVideoIE" {
+                registry.register(MangomoloVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MangomoloLiveIE" {
+                registry.register(MangomoloLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {
