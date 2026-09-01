@@ -160,6 +160,7 @@ include!("tests_parts/jove.rs");
 include!("tests_parts/joj.rs");
 include!("tests_parts/jtbc.rs");
 include!("tests_parts/jiosaavn.rs");
+include!("tests_parts/jamendo.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

@@ -368,6 +368,10 @@ impl ExtractorRegistry {
                 registry.register(JioSaavnShowPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "JioSaavnSongIE" {
                 registry.register(JioSaavnSongExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JamendoAlbumIE" {
+                registry.register(JamendoAlbumExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JamendoIE" {
+                registry.register(JamendoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
