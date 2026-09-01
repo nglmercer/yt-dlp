@@ -101,6 +101,7 @@ include!("tests_parts/filmweb.rs");
 include!("tests_parts/fivetv.rs");
 include!("tests_parts/flickr.rs");
 include!("tests_parts/freetv.rs");
+include!("tests_parts/flextv.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");
