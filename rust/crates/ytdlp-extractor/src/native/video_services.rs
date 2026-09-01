@@ -93,6 +93,7 @@ include!("video_services_parts/globalplayer.rs");
 include!("video_services_parts/gamestar.rs");
 include!("video_services_parts/godresource.rs");
 include!("video_services_parts/godtube.rs");
+include!("video_services_parts/glomex.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

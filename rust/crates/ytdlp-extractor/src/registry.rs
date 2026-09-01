@@ -276,6 +276,10 @@ impl ExtractorRegistry {
                 registry.register(GodResourceExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GodTubeIE" {
                 registry.register(GodTubeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlomexEmbedIE" {
+                registry.register(GlomexEmbedExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlomexIE" {
+                registry.register(GlomexExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
