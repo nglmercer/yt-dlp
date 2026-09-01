@@ -211,6 +211,12 @@ impl ExtractorRegistry {
                 registry.register(FazExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Funker530IE" {
                 registry.register(Funker530Extractor::new(descriptor)?)?;
+            } else if descriptor.key == "FifaIE" {
+                registry.register(FifaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FOX9IE" {
+                registry.register(Fox9Extractor::new(descriptor)?)?;
+            } else if descriptor.key == "FOX9NewsIE" {
+                registry.register(Fox9NewsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
