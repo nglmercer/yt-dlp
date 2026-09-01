@@ -350,6 +350,8 @@ impl ExtractorRegistry {
                 registry.register(JstreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "JoveIE" {
                 registry.register(JoveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JojIE" {
+                registry.register(JojExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
