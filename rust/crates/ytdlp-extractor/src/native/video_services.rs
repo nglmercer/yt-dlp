@@ -69,6 +69,7 @@ include!("video_services_parts/fox9.rs");
 include!("video_services_parts/faulio.rs");
 include!("video_services_parts/filmweb.rs");
 include!("video_services_parts/fivetv.rs");
+include!("video_services_parts/flickr.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");
