@@ -65,3 +65,4 @@ include!("tests_parts/digiteka.rs");
 include!("tests_parts/dfb.rs");
 include!("tests_parts/dvtv.rs");
 include!("tests_parts/fathom.rs");
+include!("tests_parts/dlf.rs");

@@ -137,6 +137,10 @@ impl ExtractorRegistry {
                 registry.register(DfbExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DVTVIE" {
                 registry.register(DvtvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DLFCorpusIE" {
+                registry.register(DlfExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DLFIE" {
+                registry.register(DlfExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
