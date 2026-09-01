@@ -242,6 +242,8 @@ impl ExtractorRegistry {
                 registry.register(FrontendMastersLessonExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersCourseIE" {
                 registry.register(FrontendMastersCourseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GoToStageIE" {
+                registry.register(GoToStageExtractor::new(descriptor)?)?;
             } else if descriptor.key == "UplynkIE" {
                 registry.register(UplynkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "UplynkPreplayIE" {
