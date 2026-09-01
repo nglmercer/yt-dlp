@@ -282,6 +282,8 @@ impl ExtractorRegistry {
                 registry.register(GlomexExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GiantBombIE" {
                 registry.register(GiantBombExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GediDigitalIE" {
+                registry.register(GediDigitalExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
