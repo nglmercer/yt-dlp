@@ -478,6 +478,12 @@ impl ExtractorRegistry {
                 registry.register(MochaVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MojevideoIE" {
                 registry.register(MojevideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MelonVODIE" {
+                registry.register(MelonVodExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MetacriticIE" {
+                registry.register(MetacriticExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MzaaloIE" {
+                registry.register(MzaaloExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {
