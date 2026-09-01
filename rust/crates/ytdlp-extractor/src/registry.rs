@@ -460,6 +460,12 @@ impl ExtractorRegistry {
                 registry.register(MaoriTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MagentaMusikIE" {
                 registry.register(MagentaMusikExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MindsIE" {
+                registry.register(MindsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MindsChannelIE" {
+                registry.register(MindsChannelExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MindsGroupIE" {
+                registry.register(MindsGroupExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {

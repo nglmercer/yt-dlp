@@ -168,6 +168,7 @@ include!("video_services_parts/meipai.rs");
 include!("video_services_parts/mirrativ.rs");
 include!("video_services_parts/maoritv.rs");
 include!("video_services_parts/magentamusik.rs");
+include!("video_services_parts/minds.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
