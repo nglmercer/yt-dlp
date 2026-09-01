@@ -430,6 +430,10 @@ impl ExtractorRegistry {
                 registry.register(MaarivExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MedalTVIE" {
                 registry.register(MedalTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MaveIE" {
+                registry.register(MaveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MaveChannelIE" {
+                registry.register(MaveChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
