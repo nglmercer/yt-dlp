@@ -119,6 +119,8 @@ impl ExtractorRegistry {
                 registry.register(DacastPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DacastVODIE" {
                 registry.register(DacastVodExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DailyMailIE" {
+                registry.register(DailyMailExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
