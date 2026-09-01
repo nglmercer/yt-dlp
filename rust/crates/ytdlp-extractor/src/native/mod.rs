@@ -6,6 +6,7 @@
 //! units. New ports should live in the narrowest matching file rather than
 //! growing a second monolith.
 
+include!("crypto.rs");
 include!("general.rs");
 include!("webcams.rs");
 include!("broadcast.rs");

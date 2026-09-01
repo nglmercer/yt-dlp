@@ -163,6 +163,7 @@ include!("tests_parts/jiosaavn.rs");
 include!("tests_parts/jamendo.rs");
 include!("tests_parts/kakao.rs");
 include!("tests_parts/kenh14.rs");
+include!("tests_parts/kankanews.rs");
 include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kickstarter.rs");
