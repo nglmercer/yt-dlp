@@ -101,6 +101,8 @@ impl ExtractorRegistry {
                 registry.register(CanalAlphaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CanalsurmasIE" {
                 registry.register(CanalsurmasExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "AGalegaIE" {
+                registry.register(AGalegaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

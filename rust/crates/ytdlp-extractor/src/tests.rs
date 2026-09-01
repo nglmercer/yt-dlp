@@ -48,4 +48,5 @@ include!("tests_parts/boxcast.rs");
 include!("tests_parts/berufetv.rs");
 include!("tests_parts/canalalpha.rs");
 include!("tests_parts/canalsurmas.rs");
+include!("tests_parts/agalega.rs");
 include!("tests_parts/fathom.rs");
