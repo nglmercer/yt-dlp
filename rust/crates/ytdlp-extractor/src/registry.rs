@@ -418,6 +418,8 @@ impl ExtractorRegistry {
                 registry.register(LeFigaroVideoSectionExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LearningOnScreenIE" {
                 registry.register(LearningOnScreenExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LoomIE" {
+                registry.register(LoomExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LemondeIE" {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
