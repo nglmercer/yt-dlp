@@ -1,0 +1,121 @@
+/// Native EroProfile album playlist extractor.
+pub struct EroProfileAlbumExtractor {
+    descriptor: ExtractorDescriptor,
+    matcher: Regex,
+}
+
+impl EroProfileAlbumExtractor {
+    pub fn new(descriptor: ExtractorDescriptor) -> Result<Self, ExtractorError> {
+        Ok(Self {
+            matcher: descriptor_matcher(&descriptor)?,
+            descriptor,
+        })
+    }
+}
+
+impl InfoExtractor for EroProfileAlbumExtractor {
+    fn descriptor(&self) -> &ExtractorDescriptor {
+        &self.descriptor
+    }
+
+    fn suitable(&self, url: &str) -> bool {
+        self.matcher.is_match(url).unwrap_or(false)
+    }
+
+    fn is_native(&self) -> bool {
+        true
+    }
+
+    fn native_matcher_count(&self) -> usize {
+        1
+    }
+
+    fn extract_with_context(
+        &self,
+        url: &str,
+        context: &ExtractionContext,
+    ) -> Result<ExtractorResult, ExtractorError> {
+        let playlist_id = self
+            .matcher
+            .captures(url)
+            .ok()
+            .flatten()
+            .and_then(|captures| captures.name("id"))
+            .map(|value| value.as_str().to_owned())
+            .ok_or_else(|| {
+                ExtractorError::new(
+                    ExtractorErrorKind::InvalidUrl,
+                    "EroProfile album URL has no ID",
+                )
+            })?;
+        let first_page = context.get(url)?;
+        let first_page = String::from_utf8_lossy(first_page.body()).into_owned();
+        let title = eroprofile_album_capture(
+            &first_page,
+            r#"(?is)<title>\s*Album:\s*(.*?)\s*-\s*EroProfile\s*</title>"#,
+        )
+        .map(|value| html_text_fragment(&value))
+        .filter(|value| !value.is_empty());
+        let mut pages = vec![first_page];
+        let page_pattern = format!(
+            r#"(?is)href\s*=\s*["'][^"']*(/m/videos/album/{}\?pnum=(\d+))[^"']*["']"#,
+            regex::escape(&playlist_id)
+        );
+        let page_matcher = Regex::new(&page_pattern).map_err(|error| {
+            ExtractorError::new(
+                ExtractorErrorKind::Extraction,
+                format!("invalid EroProfile album page matcher: {error}"),
+            )
+        })?;
+        let max_page = page_matcher
+            .captures_iter(&pages[0])
+            .flatten()
+            .filter_map(|captures| captures.get(2)?.as_str().parse::<usize>().ok())
+            .max()
+            .unwrap_or(1);
+        for page_number in 2..=max_page {
+            let page_url =
+                format!("https://www.eroprofile.com/m/videos/album/{playlist_id}?pnum={page_number}");
+            let response = context.get(&page_url)?;
+            pages.push(String::from_utf8_lossy(response.body()).into_owned());
+        }
+        let mut entries = Vec::new();
+        for page in pages {
+            let entry_matcher = Regex::new(
+                r#"(?is)href\s*=\s*["'][^"']*(/m/videos/view/[^"']+)["']"#,
+            )
+            .map_err(|error| {
+                ExtractorError::new(
+                    ExtractorErrorKind::Extraction,
+                    format!("invalid EroProfile album entry matcher: {error}"),
+                )
+            })?;
+            for captures in entry_matcher.captures_iter(&page).flatten() {
+                let Some(path) = captures.get(1).map(|value| value.as_str()) else {
+                    continue;
+                };
+                let target_url =
+                    format!("https://www.eroprofile.com{}", unescape_html_attribute(path));
+                if entries.iter().any(|entry: &InfoDict| {
+                    entry.get_str("url") == Some(target_url.as_str())
+                }) {
+                    continue;
+                }
+                let mut entry = native_url_result(&target_url);
+                entry.insert("ie_key", serde_json::json!("EroProfile"));
+                entries.push(entry);
+            }
+        }
+        let mut info = InfoDict::new();
+        info.insert("id", serde_json::json!(playlist_id));
+        info.insert_if_some("title", title);
+        Ok(ExtractorResult::Playlist { info, entries })
+    }
+}
+
+fn eroprofile_album_capture(html: &str, pattern: &str) -> Option<String> {
+    Regex::new(pattern)
+        .ok()
+        .and_then(|matcher| matcher.captures(html).ok().flatten())
+        .and_then(|captures| captures.get(1).map(|value| value.as_str().to_owned()))
+}

@@ -78,6 +78,7 @@ include!("tests_parts/euscreen.rs");
 include!("tests_parts/ertgr.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
+include!("tests_parts/eroprofile_album.rs");
 include!("tests_parts/epidemicsound.rs");
 include!("tests_parts/epicon.rs");
 include!("tests_parts/eporner.rs");

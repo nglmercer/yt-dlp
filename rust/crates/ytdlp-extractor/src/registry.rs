@@ -181,6 +181,8 @@ impl ExtractorRegistry {
                 registry.register(EpornerExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EroProfileIE" {
                 registry.register(EroProfileExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EroProfileAlbumIE" {
+                registry.register(EroProfileAlbumExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
