@@ -122,6 +122,7 @@ impl DirectDownloader {
                 segment_request.set_url(segment);
                 segment_request.set_data(None);
                 segment_request.set_method("GET")?;
+                native_apply_extra_param_to_segment_url(&mut segment_request)?;
                 if let Some(range) = range {
                     segment_request.headers_mut().set(
                         "Range",
@@ -266,6 +267,7 @@ impl DirectDownloader {
                 segment_request.set_url(segment);
                 segment_request.set_data(None);
                 segment_request.set_method("GET")?;
+                native_apply_extra_param_to_segment_url(&mut segment_request)?;
                 if let Some(range) = range {
                     segment_request.headers_mut().set(
                         "Range",

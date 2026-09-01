@@ -213,6 +213,8 @@ impl ExtractorRegistry {
                 registry.register(Funker530Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FifaIE" {
                 registry.register(FifaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FoxSportsIE" {
+                registry.register(FoxSportsExtractor::new(descriptor)?)?;
             } else if matches!(
                 descriptor.key.as_str(),
                 "FourTubeIE" | "FuxIE" | "PornTubeIE" | "PornerBrosIE"
@@ -234,6 +236,10 @@ impl ExtractorRegistry {
                 registry.register(FrontendMastersLessonExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersCourseIE" {
                 registry.register(FrontendMastersCourseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "UplynkIE" {
+                registry.register(UplynkExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "UplynkPreplayIE" {
+                registry.register(UplynkPreplayExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9IE" {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {

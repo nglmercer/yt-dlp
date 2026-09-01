@@ -1577,6 +1577,7 @@ name = "yt-dlp-downloader"
 version = "0.0.0"
 dependencies = [
  "quick-xml",
+ "serde_json",
  "url",
  "yt-dlp-core",
  "yt-dlp-networking",

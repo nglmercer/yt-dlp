@@ -1,7 +1,23 @@
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SelectedFormat {
+    url: String,
+    ext: Option<String>,
+    extra_param_to_segment_url: Option<String>,
+}
+
+#[cfg(test)]
 fn select_download_format(
     info: &InfoDict,
     selector: Option<&str>,
 ) -> Result<(String, Option<String>), String> {
+    let selected = select_download_format_details(info, selector)?;
+    Ok((selected.url, selected.ext))
+}
+
+fn select_download_format_details(
+    info: &InfoDict,
+    selector: Option<&str>,
+) -> Result<SelectedFormat, String> {
     let formats = format_records(info);
     let Some(selector) = selector else {
         let url = info
@@ -18,7 +34,17 @@ fn select_download_format(
             .get("ext")
             .and_then(serde_json::Value::as_str)
             .map(str::to_owned);
-        return Ok((url.to_owned(), ext));
+        let selected_format = formats
+            .iter()
+            .find(|format| format.get("url").and_then(serde_json::Value::as_str) == Some(url));
+        return Ok(SelectedFormat {
+            url: url.to_owned(),
+            ext,
+            extra_param_to_segment_url: selected_format
+                .map(|format| format_extra_param(format))
+                .transpose()?
+                .flatten(),
+        });
     };
 
     let mut selected = None;
@@ -73,5 +99,21 @@ fn select_download_format(
         .and_then(serde_json::Value::as_str)
         .or_else(|| info.get("ext").and_then(serde_json::Value::as_str))
         .map(str::to_owned);
-    Ok((url.to_owned(), ext))
+    Ok(SelectedFormat {
+        url: url.to_owned(),
+        ext,
+        extra_param_to_segment_url: format_extra_param(format)?,
+    })
+}
+
+fn format_extra_param(format: &serde_json::Value) -> Result<Option<String>, String> {
+    let Some(value) = format.get("extra_param_to_segment_url") else {
+        return Ok(None);
+    };
+    value
+        .as_str()
+        .map(|value| Some(value.to_owned()))
+        .ok_or_else(|| {
+            "TODO: native format extra_param_to_segment_url must be a string".to_owned()
+        })
 }

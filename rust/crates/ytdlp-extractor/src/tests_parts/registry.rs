@@ -138,7 +138,7 @@ fn generated_manifest_preserves_extractor_inventory_and_order() {
         registry.iter().last().unwrap().descriptor().key,
         "GenericIE"
     );
-    assert_eq!(registry.native_implementation_count(), 226);
+    assert_eq!(registry.native_implementation_count(), 229);
 }
 
 #[test]

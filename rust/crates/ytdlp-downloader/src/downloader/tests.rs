@@ -160,6 +160,20 @@ mod tests {
     }
 
     #[test]
+    fn fragment_requests_append_native_extra_query_parameters() {
+        let mut request = Request::new("http://example.test/video/segment.ts?existing=1");
+        request.extensions_mut().insert(
+            "extra_param_to_segment_url".to_owned(),
+            serde_json::json!("pbs=session-1"),
+        );
+        native_apply_extra_param_to_segment_url(&mut request).unwrap();
+        assert_eq!(
+            request.url(),
+            "http://example.test/video/segment.ts?existing=1&pbs=session-1"
+        );
+    }
+
+    #[test]
     fn parses_dash_segment_lists_with_base_url_scope() {
         let manifest = parse_dash_mpd(
             "http://example.test/manifests/main.mpd",

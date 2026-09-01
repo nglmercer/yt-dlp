@@ -256,9 +256,17 @@ fn native_download_info(
         .format
         .as_deref()
         .or(options.extractaudio.then_some("bestaudio"));
-    let (download_url, selected_ext) = select_download_format(&info, selector)?;
+    let selected = select_download_format_details(&info, selector)?;
+    let download_url = selected.url;
+    let selected_ext = selected.ext;
     let mut request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
     native_apply_info_http_headers(&mut request, info)?;
+    if let Some(extra_param) = selected.extra_param_to_segment_url {
+        request.extensions_mut().insert(
+            "extra_param_to_segment_url".to_owned(),
+            serde_json::json!(extra_param),
+        );
+    }
     let output = direct_output_path(info, options, selected_ext.as_deref())?;
     let requested_fields = print_requested_fields(info, options, &download_url);
     let info_path = if options.writeinfojson == Some(true) {

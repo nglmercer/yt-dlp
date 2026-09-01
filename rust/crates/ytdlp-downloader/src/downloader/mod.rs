@@ -13,5 +13,6 @@ include!("core.rs");
 include!("direct.rs");
 include!("hls.rs");
 include!("dash.rs");
+include!("segment.rs");
 include!("output.rs");
 include!("tests.rs");
