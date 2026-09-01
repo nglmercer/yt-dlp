@@ -45,4 +45,5 @@ include!("video_services_parts/dropbox.rs");
 include!("video_services_parts/drtuber.rs");
 include!("video_services_parts/err.rs");
 include!("video_services_parts/euscreen.rs");
+include!("video_services_parts/ertgr.rs");
 include!("video_services_parts/fathom.rs");

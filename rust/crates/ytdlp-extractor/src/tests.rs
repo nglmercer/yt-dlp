@@ -75,3 +75,4 @@ include!("tests_parts/dropbox.rs");
 include!("tests_parts/drtuber.rs");
 include!("tests_parts/err.rs");
 include!("tests_parts/euscreen.rs");
+include!("tests_parts/ertgr.rs");
