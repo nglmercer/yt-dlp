@@ -435,6 +435,8 @@ impl ExtractorRegistry {
                 registry.register(FrancaisFacileExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FranceCultureIE" {
                 registry.register(FranceCultureExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "RadioFranceIE" {
+                registry.register(RadioFranceExtractor::new(descriptor)?)?;
             } else if descriptor.key == "YandexDiskIE" {
                 registry.register(YandexDiskExtractor::new(descriptor)?)?;
             } else if descriptor.key == "RumbleEmbedIE" {
