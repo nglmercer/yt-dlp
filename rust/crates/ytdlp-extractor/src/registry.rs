@@ -414,6 +414,8 @@ impl ExtractorRegistry {
                 registry.register(LibraryOfCongressExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LikeeIE" {
                 registry.register(LikeeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LikeeUserIE" {
+                registry.register(LikeeUserExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LibsynIE" {
                 registry.register(LibsynExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {

@@ -92,3 +92,82 @@ impl InfoExtractor for LikeeExtractor {
         Ok(ExtractorResult::single(output))
     }
 }
+
+/// Native Likee user playlist extractor.
+pub struct LikeeUserExtractor {
+    descriptor: ExtractorDescriptor,
+    matcher: Regex,
+}
+
+impl LikeeUserExtractor {
+    pub fn new(descriptor: ExtractorDescriptor) -> Result<Self, ExtractorError> {
+        Ok(Self {
+            matcher: descriptor_matcher(&descriptor)?,
+            descriptor,
+        })
+    }
+}
+
+impl InfoExtractor for LikeeUserExtractor {
+    fn descriptor(&self) -> &ExtractorDescriptor {
+        &self.descriptor
+    }
+
+    fn suitable(&self, url: &str) -> bool {
+        self.matcher.is_match(url).unwrap_or(false)
+    }
+
+    fn is_native(&self) -> bool {
+        true
+    }
+
+    fn native_matcher_count(&self) -> usize {
+        1
+    }
+
+    fn extract_with_context(
+        &self,
+        url: &str,
+        context: &ExtractionContext,
+    ) -> Result<ExtractorResult, ExtractorError> {
+        let user_name = self
+            .matcher
+            .captures(url)
+            .ok()
+            .flatten()
+            .and_then(|captures| captures.name("id"))
+            .map(|value| value.as_str().to_owned())
+            .ok_or_else(|| {
+                ExtractorError::new(ExtractorErrorKind::InvalidUrl, "Likee user URL has no ID")
+            })?;
+        let response = context.get(url)?;
+        let webpage = String::from_utf8_lossy(response.body());
+        let data = json_object_after_marker(&webpage, "window.data").ok_or_else(|| {
+            ExtractorError::new(
+                ExtractorErrorKind::Extraction,
+                format!("Likee user {user_name} has no window.data payload"),
+            )
+        })?;
+        let user_info = data.get("userinfo").ok_or_else(|| {
+            ExtractorError::new(
+                ExtractorErrorKind::Extraction,
+                format!("Likee user {user_name} has no userinfo payload"),
+            )
+        })?;
+        let user_id = likee_user_id_value(user_info).ok_or_else(|| {
+            ExtractorError::new(
+                ExtractorErrorKind::Extraction,
+                format!("Likee user {user_name} has no user ID"),
+            )
+        })?;
+        let entries = likee_user_entries(context, &user_name, &user_id)?;
+        let title = json_string(user_info, "user_name")
+            .or_else(|| json_string(user_info, "username"))
+            .unwrap_or(&user_name)
+            .to_owned();
+        let mut info = InfoDict::new();
+        info.insert("id", user_id);
+        info.insert("title", serde_json::json!(title));
+        Ok(ExtractorResult::Playlist { info, entries })
+    }
+}
