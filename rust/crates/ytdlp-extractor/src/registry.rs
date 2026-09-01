@@ -338,6 +338,8 @@ impl ExtractorRegistry {
                 registry.register(InternazionaleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "IcareusIE" {
                 registry.register(IcareusExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "IxiguaIE" {
+                registry.register(IxiguaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
