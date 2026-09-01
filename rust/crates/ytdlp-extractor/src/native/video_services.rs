@@ -34,4 +34,5 @@ include!("video_services_parts/crtvg.rs");
 include!("video_services_parts/cultureunplugged.rs");
 include!("video_services_parts/ctsnews.rs");
 include!("video_services_parts/digiteka.rs");
+include!("video_services_parts/dfb.rs");
 include!("video_services_parts/fathom.rs");

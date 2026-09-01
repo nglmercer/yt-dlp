@@ -62,4 +62,5 @@ include!("tests_parts/crtvg.rs");
 include!("tests_parts/cultureunplugged.rs");
 include!("tests_parts/ctsnews.rs");
 include!("tests_parts/digiteka.rs");
+include!("tests_parts/dfb.rs");
 include!("tests_parts/fathom.rs");

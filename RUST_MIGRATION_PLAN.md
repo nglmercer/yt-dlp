@@ -154,6 +154,7 @@ self-update behavior.
 - [x] native CrowdBunker video API/channel pagination extractor
 - [x] native CTS News direct feed extractor with YouTube fallback TODO
 - [x] native Digiteka player-configuration/HLS/MP4 extractor
+- [x] native DFB XML/tokenized HLS extractor with HDS TODO
 - [x] native bTV Plus player-configuration/HLS extractor
 - [x] native BoxCast recorded-broadcast/HLS extractor with live TODO guard
 - [x] native BerufeTV metadata/player API extractor with subtitle support
