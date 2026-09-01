@@ -147,6 +147,7 @@ include!("video_services_parts/learningonscreen.rs");
 include!("video_services_parts/loom.rs");
 include!("video_services_parts/locipo.rs");
 include!("video_services_parts/loco.rs");
+include!("video_services_parts/le.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");

@@ -177,6 +177,7 @@ include!("tests_parts/learningonscreen.rs");
 include!("tests_parts/loom.rs");
 include!("tests_parts/locipo.rs");
 include!("tests_parts/loco.rs");
+include!("tests_parts/le.rs");
 include!("tests_parts/lemonde_lenta.rs");
 include!("tests_parts/libraryofcongress.rs");
 include!("tests_parts/libsyn.rs");
