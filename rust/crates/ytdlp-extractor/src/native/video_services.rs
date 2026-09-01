@@ -96,6 +96,7 @@ include!("video_services_parts/godtube.rs");
 include!("video_services_parts/glomex.rs");
 include!("video_services_parts/giantbomb.rs");
 include!("video_services_parts/gedidigital.rs");
+include!("video_services_parts/groupon.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

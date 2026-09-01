@@ -284,6 +284,8 @@ impl ExtractorRegistry {
                 registry.register(GiantBombExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GediDigitalIE" {
                 registry.register(GediDigitalExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GrouponIE" {
+                registry.register(GrouponExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
