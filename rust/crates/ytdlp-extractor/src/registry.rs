@@ -424,6 +424,8 @@ impl ExtractorRegistry {
                 registry.register(LocipoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LocipoPlaylistIE" {
                 registry.register(LocipoPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LocoIE" {
+                registry.register(LocoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LemondeIE" {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
