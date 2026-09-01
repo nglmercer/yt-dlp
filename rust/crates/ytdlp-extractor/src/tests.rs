@@ -173,6 +173,7 @@ include!("tests_parts/lnk.rs");
 include!("tests_parts/lecture2go.rs");
 include!("tests_parts/la7.rs");
 include!("tests_parts/lecturio.rs");
+include!("tests_parts/litv.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");
 include!("tests_parts/learningonscreen.rs");

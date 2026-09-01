@@ -416,6 +416,8 @@ impl ExtractorRegistry {
                 registry.register(LecturioCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LecturioDeCourseIE" {
                 registry.register(LecturioDeCourseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LiTVIE" {
+                registry.register(LitvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {

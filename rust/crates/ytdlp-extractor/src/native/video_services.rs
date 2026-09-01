@@ -150,6 +150,7 @@ include!("video_services_parts/loco.rs");
 include!("video_services_parts/le.rs");
 include!("video_services_parts/la7.rs");
 include!("video_services_parts/lecturio.rs");
+include!("video_services_parts/litv.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
