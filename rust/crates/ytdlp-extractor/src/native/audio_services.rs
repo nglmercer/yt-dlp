@@ -22,3 +22,4 @@ include!("audio_services_parts/kuwo.rs");
 include!("audio_services_parts/libsyn.rs");
 include!("audio_services_parts/listennotes.rs");
 include!("audio_services_parts/mave.rs");
+include!("audio_services_parts/mixlr.rs");
