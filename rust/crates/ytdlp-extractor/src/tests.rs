@@ -97,6 +97,8 @@ include!("tests_parts/funker530.rs");
 include!("tests_parts/fifa.rs");
 include!("tests_parts/fox9.rs");
 include!("tests_parts/faulio.rs");
+include!("tests_parts/filmweb.rs");
+include!("tests_parts/fivetv.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");

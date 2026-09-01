@@ -221,6 +221,10 @@ impl ExtractorRegistry {
                 registry.register(FaulioExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FaulioLiveIE" {
                 registry.register(FaulioLiveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FilmwebIE" {
+                registry.register(FilmwebExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FiveTVIE" {
+                registry.register(FiveTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
