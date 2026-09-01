@@ -122,6 +122,7 @@ include!("video_services_parts/iltalehti.rs");
 include!("video_services_parts/jstream.rs");
 include!("video_services_parts/jove.rs");
 include!("video_services_parts/joj.rs");
+include!("video_services_parts/jtbc.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

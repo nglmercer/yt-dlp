@@ -352,6 +352,10 @@ impl ExtractorRegistry {
                 registry.register(JoveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "JojIE" {
                 registry.register(JojExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JTBCIE" {
+                registry.register(JtbcExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JTBCProgramIE" {
+                registry.register(JtbcProgramExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
