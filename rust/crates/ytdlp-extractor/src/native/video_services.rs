@@ -72,6 +72,7 @@ include!("video_services_parts/fivetv.rs");
 include!("video_services_parts/flickr.rs");
 include!("video_services_parts/freetv.rs");
 include!("video_services_parts/flextv.rs");
+include!("video_services_parts/firsttv.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");

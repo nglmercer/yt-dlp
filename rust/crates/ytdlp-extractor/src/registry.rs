@@ -233,6 +233,10 @@ impl ExtractorRegistry {
                 registry.register(FreeTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FlexTVIE" {
                 registry.register(FlexTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FirstTVIE" {
+                registry.register(FirstTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FirstTVLiveIE" {
+                registry.register(FirstTvLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
