@@ -164,6 +164,7 @@ self-update behavior.
 - [x] native Daily Wire Next.js episode/video and podcast extractors
 - [x] native Dropbox streamed-prefetch extractor with password TODO
 - [x] native DrTuber player-config/page-metadata extractor
+- [x] native ERR/Jupiter VOD API extractor with DRM TODO
 - [x] native bTV Plus player-configuration/HLS extractor
 - [x] native BoxCast recorded-broadcast/HLS extractor with live TODO guard
 - [x] native BerufeTV metadata/player API extractor with subtitle support
