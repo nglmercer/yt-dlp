@@ -420,6 +420,10 @@ impl ExtractorRegistry {
                 registry.register(LearningOnScreenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LoomIE" {
                 registry.register(LoomExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LocipoIE" {
+                registry.register(LocipoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LocipoPlaylistIE" {
+                registry.register(LocipoPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LemondeIE" {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
