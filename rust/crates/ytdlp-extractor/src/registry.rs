@@ -506,6 +506,8 @@ impl ExtractorRegistry {
                 registry.register(BannedVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CoubIE" {
                 registry.register(CoubExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GoogleDriveFolderIE" {
+                registry.register(GoogleDriveFolderExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GoogleDriveIE" {
                 registry.register(GoogleDriveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "VocarooIE" {

@@ -8,6 +8,7 @@ include!("tests_parts/native_d.rs");
 include!("tests_parts/native_e.rs");
 include!("tests_parts/native_f.rs");
 include!("tests_parts/native_g.rs");
+include!("tests_parts/google_drive_folder.rs");
 include!("tests_parts/native_h.rs");
 include!("tests_parts/ninegag.rs");
 include!("tests_parts/myvidster.rs");
