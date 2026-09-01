@@ -268,6 +268,8 @@ impl ExtractorRegistry {
                 registry.register(GlobalPlayerVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GameStarIE" {
                 registry.register(GameStarExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GabIE" {
+                registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
                 registry.register(GettrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrStreamingIE" {
