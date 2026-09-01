@@ -356,6 +356,18 @@ impl ExtractorRegistry {
                 registry.register(JtbcExtractor::new(descriptor)?)?;
             } else if descriptor.key == "JTBCProgramIE" {
                 registry.register(JtbcProgramExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnAlbumIE" {
+                registry.register(JioSaavnAlbumExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnArtistIE" {
+                registry.register(JioSaavnArtistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnPlaylistIE" {
+                registry.register(JioSaavnPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnShowIE" {
+                registry.register(JioSaavnShowExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnShowPlaylistIE" {
+                registry.register(JioSaavnShowPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "JioSaavnSongIE" {
+                registry.register(JioSaavnSongExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
