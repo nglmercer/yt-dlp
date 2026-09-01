@@ -410,6 +410,12 @@ impl ExtractorRegistry {
                 registry.register(La7PodcastEpisodeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LA7PodcastIE" {
                 registry.register(La7PodcastExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LecturioIE" {
+                registry.register(LecturioExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LecturioCourseIE" {
+                registry.register(LecturioCourseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LecturioDeCourseIE" {
+                registry.register(LecturioDeCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
