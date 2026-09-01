@@ -416,6 +416,12 @@ impl ExtractorRegistry {
                 registry.register(LikeeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LikeeUserIE" {
                 registry.register(LikeeUserExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LastFMIE" {
+                registry.register(LastFmExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LastFMPlaylistIE" {
+                registry.register(LastFmPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LastFMUserIE" {
+                registry.register(LastFmUserExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LibsynIE" {
                 registry.register(LibsynExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {

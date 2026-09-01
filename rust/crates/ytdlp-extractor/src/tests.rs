@@ -175,6 +175,7 @@ include!("tests_parts/lemonde_lenta.rs");
 include!("tests_parts/libraryofcongress.rs");
 include!("tests_parts/libsyn.rs");
 include!("tests_parts/likee.rs");
+include!("tests_parts/lastfm.rs");
 include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kicker.rs");
