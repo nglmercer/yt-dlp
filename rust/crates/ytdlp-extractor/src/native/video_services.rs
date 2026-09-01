@@ -139,6 +139,7 @@ include!("video_services_parts/kukululive.rs");
 include!("video_services_parts/kaltura.rs");
 include!("video_services_parts/kth.rs");
 include!("video_services_parts/kinopoisk.rs");
+include!("video_services_parts/lnk.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

@@ -402,6 +402,8 @@ impl ExtractorRegistry {
                 registry.register(KuwoMvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KuwoSingerIE" {
                 registry.register(KuwoSingerExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LnkIE" {
+                registry.register(LnkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
