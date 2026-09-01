@@ -93,6 +93,7 @@ include!("tests_parts/freespeech.rs");
 include!("tests_parts/foxnews.rs");
 include!("tests_parts/foxnews_wrappers.rs");
 include!("tests_parts/faz.rs");
+include!("tests_parts/funker530.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");

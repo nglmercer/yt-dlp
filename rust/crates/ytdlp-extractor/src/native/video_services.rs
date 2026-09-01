@@ -63,6 +63,7 @@ include!("video_services_parts/freespeech.rs");
 include!("video_services_parts/foxnews.rs");
 include!("video_services_parts/foxnews_wrappers.rs");
 include!("video_services_parts/faz.rs");
+include!("video_services_parts/funker530.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");

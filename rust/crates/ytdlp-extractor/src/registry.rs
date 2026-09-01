@@ -209,6 +209,8 @@ impl ExtractorRegistry {
                 registry.register(FoxNewsArticleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FazIE" {
                 registry.register(FazExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Funker530IE" {
+                registry.register(Funker530Extractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
