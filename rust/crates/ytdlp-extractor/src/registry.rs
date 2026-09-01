@@ -173,6 +173,8 @@ impl ExtractorRegistry {
                 registry.register(ErtflixCodenameExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ERTFlixIE" {
                 registry.register(ErtflixExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ExpressenIE" {
+                registry.register(ExpressenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
