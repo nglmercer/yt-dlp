@@ -90,6 +90,7 @@ include!("video_services_parts/gronkh.rs");
 include!("video_services_parts/goodgame.rs");
 include!("video_services_parts/globalplayer.rs");
 include!("video_services_parts/gamestar.rs");
+include!("video_services_parts/godresource.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

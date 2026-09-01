@@ -122,6 +122,7 @@ include!("tests_parts/gronkh.rs");
 include!("tests_parts/goodgame.rs");
 include!("tests_parts/globalplayer.rs");
 include!("tests_parts/gamestar.rs");
+include!("tests_parts/godresource.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");
