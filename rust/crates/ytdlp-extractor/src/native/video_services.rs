@@ -128,6 +128,7 @@ include!("video_services_parts/kenh14.rs");
 include!("video_services_parts/kankanews.rs");
 include!("video_services_parts/kika.rs");
 include!("video_services_parts/kick.rs");
+include!("video_services_parts/kicker.rs");
 include!("video_services_parts/kickstarter.rs");
 include!("video_services_parts/kukululive.rs");
 include!("video_services_parts/kaltura.rs");
