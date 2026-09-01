@@ -87,6 +87,7 @@ include!("video_services_parts/gaskrank.rs");
 include!("video_services_parts/gamespot.rs");
 include!("video_services_parts/gopro.rs");
 include!("video_services_parts/gronkh.rs");
+include!("video_services_parts/goodgame.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
