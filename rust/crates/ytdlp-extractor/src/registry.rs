@@ -254,6 +254,10 @@ impl ExtractorRegistry {
                 registry.register(GoProExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GronkhIE" {
                 registry.register(GronkhExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GronkhFeedIE" {
+                registry.register(GronkhFeedExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GronkhVodsIE" {
+                registry.register(GronkhVodsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GoodGameIE" {
                 registry.register(GoodGameExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GlobalPlayerLiveIE" {

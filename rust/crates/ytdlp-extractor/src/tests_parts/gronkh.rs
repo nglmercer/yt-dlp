@@ -58,3 +58,88 @@ fn gronkh_native_extractor_maps_vod_metadata_hls_and_chapters() {
         Some(120.5)
     );
 }
+
+#[test]
+fn gronkh_feed_native_extractor_builds_discovery_playlist() {
+    let extractor = GronkhFeedExtractor::new(ExtractorDescriptor::new(
+        "GronkhFeedIE",
+        "gronkh:feed",
+        r#"https?://(?:www\.)?gronkh\.tv(?:/feed)?/?(?:#|$)"#,
+        true,
+    ))
+    .unwrap();
+    let mut director = RequestDirector::new();
+    director.add_handler(RoutedHandler {
+        routes: vec![
+            (
+                "api.gronkh.tv/v1/video/discovery/recent".to_owned(),
+                br#"{"discovery":[{"episode":657,"title":"Recent title"}]}"#.to_vec(),
+            ),
+            (
+                "api.gronkh.tv/v1/video/discovery/views".to_owned(),
+                br#"{"discovery":[{"episode":536,"title":"Most viewed"}]}"#.to_vec(),
+            ),
+        ],
+    });
+    let context = ExtractionContext::new(director, CookieJar::new().shared());
+    let ExtractorResult::Playlist { info, entries } = extractor
+        .extract_with_context("https://gronkh.tv/feed", &context)
+        .unwrap()
+    else {
+        panic!("expected Gronkh feed playlist");
+    };
+
+    assert_eq!(info.get_str("id"), Some("feed"));
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].get_str("_type"), Some("url"));
+    assert_eq!(
+        entries[0].get_str("url"),
+        Some("https://gronkh.tv/watch/stream/657")
+    );
+    assert_eq!(entries[0].get_str("ie_key"), Some("Gronkh"));
+    assert_eq!(entries[0].get_str("id"), Some("Recent title"));
+}
+
+#[test]
+fn gronkh_vods_native_extractor_pages_search_results() {
+    let extractor = GronkhVodsExtractor::new(ExtractorDescriptor::new(
+        "GronkhVodsIE",
+        "gronkh:vods",
+        r#"https?://(?:www\.)?gronkh\.tv/vods/streams/?(?:#|$)"#,
+        true,
+    ))
+    .unwrap();
+    let mut director = RequestDirector::new();
+    director.add_handler(RoutedHandler {
+        routes: vec![
+            (
+                "api.gronkh.tv/v1/search?offset=0&first=25".to_owned(),
+                br#"{"results":{"videos":[{"episode":657,"title":"First VOD"}]}}"#
+                    .to_vec(),
+            ),
+            (
+                "api.gronkh.tv/v1/search?offset=25&first=25".to_owned(),
+                br#"{"results":{"videos":[{"episode":536,"title":"Second VOD"}]}}"#
+                    .to_vec(),
+            ),
+            (
+                "api.gronkh.tv/v1/search?offset=50&first=25".to_owned(),
+                br#"{"results":{"videos":[]}}"#.to_vec(),
+            ),
+        ],
+    });
+    let context = ExtractionContext::new(director, CookieJar::new().shared());
+    let ExtractorResult::Playlist { info, entries } = extractor
+        .extract_with_context("https://gronkh.tv/vods/streams", &context)
+        .unwrap()
+    else {
+        panic!("expected Gronkh VOD playlist");
+    };
+
+    assert_eq!(info.get_str("id"), Some("vods"));
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].get_str("id"), Some("657"));
+    assert_eq!(entries[0].get_str("title"), Some("First VOD"));
+    assert_eq!(entries[1].get_str("id"), Some("536"));
+    assert_eq!(entries[1].get_str("title"), Some("Second VOD"));
+}
