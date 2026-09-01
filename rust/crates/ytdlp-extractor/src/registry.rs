@@ -177,6 +177,8 @@ impl ExtractorRegistry {
                 registry.register(ExpressenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ESPNCricInfoIE" {
                 registry.register(EspnCricinfoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ESPNIE" {
+                registry.register(EspnExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
