@@ -89,6 +89,7 @@ include!("tests_parts/eggs.rs");
 include!("tests_parts/embedly.rs");
 include!("tests_parts/europeantour.rs");
 include!("tests_parts/fivethirtyeight.rs");
+include!("tests_parts/freespeech.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");

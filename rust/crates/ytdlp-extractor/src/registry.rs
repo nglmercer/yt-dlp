@@ -199,6 +199,8 @@ impl ExtractorRegistry {
                 registry.register(EuropeanTourExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FiveThirtyEightIE" {
                 registry.register(FiveThirtyEightExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FreespeechIE" {
+                registry.register(FreespeechExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
