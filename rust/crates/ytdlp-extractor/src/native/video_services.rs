@@ -37,4 +37,5 @@ include!("video_services_parts/digiteka.rs");
 include!("video_services_parts/dfb.rs");
 include!("video_services_parts/dvtv.rs");
 include!("video_services_parts/drbonanza.rs");
+include!("video_services_parts/duoplay.rs");
 include!("video_services_parts/fathom.rs");

@@ -143,6 +143,8 @@ impl ExtractorRegistry {
                 registry.register(DlfExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DRBonanzaIE" {
                 registry.register(DrBonanzaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DuoplayIE" {
+                registry.register(DuoplayExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
