@@ -115,6 +115,7 @@ include!("tests_parts/francetv.rs");
 include!("tests_parts/france_culture.rs");
 include!("tests_parts/gotostage.rs");
 include!("tests_parts/gbnews.rs");
+include!("tests_parts/gaskrank.rs");
 include!("tests_parts/radiofrance.rs");
 include!("tests_parts/uplynk.rs");
 include!("tests_parts/erocast.rs");
