@@ -36,6 +36,15 @@ impl InfoExtractor for KalturaExtractor {
         context: &ExtractionContext,
     ) -> Result<ExtractorResult, ExtractorError> {
         let target = kaltura_target(url)?;
+        kaltura_extract_target(url, context, target)
+    }
+}
+
+fn kaltura_extract_target(
+    url: &str,
+    context: &ExtractionContext,
+    target: KalturaTarget,
+) -> Result<ExtractorResult, ExtractorError> {
         let (info, flavor_assets, captions) = kaltura_fetch_video(context, &target)?;
         let data_url = json_string(&info, "dataUrl")
             .filter(|value| !value.trim().is_empty())
@@ -106,7 +115,6 @@ impl InfoExtractor for KalturaExtractor {
         output.insert("subtitles", subtitles);
         output.insert("webpage_url", serde_json::json!(url));
         Ok(ExtractorResult::single(output))
-    }
 }
 
 fn kaltura_normalize_data_url(value: &str) -> String {

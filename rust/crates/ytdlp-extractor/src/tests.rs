@@ -167,6 +167,7 @@ include!("tests_parts/kika.rs");
 include!("tests_parts/kickstarter.rs");
 include!("tests_parts/kukululive.rs");
 include!("tests_parts/kaltura.rs");
+include!("tests_parts/kth.rs");
 include!("tests_parts/kinopoisk.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");

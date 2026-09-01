@@ -388,6 +388,8 @@ impl ExtractorRegistry {
                 registry.register(KukuluLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KalturaIE" {
                 registry.register(KalturaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KTHIE" {
+                registry.register(KthExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KinoPoiskIE" {
                 registry.register(KinopoiskExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
