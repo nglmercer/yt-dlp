@@ -170,6 +170,7 @@ include!("tests_parts/khanacademy.rs");
 include!("tests_parts/katsomo.rs");
 include!("tests_parts/kuwo.rs");
 include!("tests_parts/lnk.rs");
+include!("tests_parts/lecture2go.rs");
 include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kicker.rs");
