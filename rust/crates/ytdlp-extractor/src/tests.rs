@@ -129,6 +129,8 @@ include!("tests_parts/glomex.rs");
 include!("tests_parts/giantbomb.rs");
 include!("tests_parts/gedidigital.rs");
 include!("tests_parts/groupon.rs");
+include!("tests_parts/gmanetwork.rs");
+include!("tests_parts/germanupa.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

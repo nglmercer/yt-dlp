@@ -286,6 +286,10 @@ impl ExtractorRegistry {
                 registry.register(GediDigitalExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GrouponIE" {
                 registry.register(GrouponExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GMANetworkVideoIE" {
+                registry.register(GmaNetworkVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GermanupaIE" {
+                registry.register(GermanupaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
