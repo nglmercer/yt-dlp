@@ -56,6 +56,7 @@ include!("video_services_parts/elpais.rs");
 include!("video_services_parts/europarl.rs");
 include!("video_services_parts/egghead.rs");
 include!("video_services_parts/eggs.rs");
+include!("video_services_parts/embedly.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");

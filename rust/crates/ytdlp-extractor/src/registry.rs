@@ -193,6 +193,8 @@ impl ExtractorRegistry {
                 registry.register(EggsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EggsArtistIE" {
                 registry.register(EggsArtistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EmbedlyIE" {
+                registry.register(EmbedlyExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
