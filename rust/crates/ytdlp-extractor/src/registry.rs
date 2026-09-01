@@ -189,6 +189,10 @@ impl ExtractorRegistry {
                 registry.register(EggheadCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EggheadLessonIE" {
                 registry.register(EggheadLessonExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EggsIE" {
+                registry.register(EggsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EggsArtistIE" {
+                registry.register(EggsArtistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {

@@ -85,6 +85,7 @@ include!("tests_parts/espn_article.rs");
 include!("tests_parts/elpais.rs");
 include!("tests_parts/europarl.rs");
 include!("tests_parts/egghead.rs");
+include!("tests_parts/eggs.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");
