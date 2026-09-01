@@ -141,6 +141,7 @@ include!("video_services_parts/kth.rs");
 include!("video_services_parts/kinopoisk.rs");
 include!("video_services_parts/lnk.rs");
 include!("video_services_parts/lecture2go.rs");
+include!("video_services_parts/lrt.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");

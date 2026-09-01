@@ -406,6 +406,12 @@ impl ExtractorRegistry {
                 registry.register(LnkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Lecture2GoIE" {
                 registry.register(Lecture2GoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LRTStreamIE" {
+                registry.register(LrtStreamExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LRTVODIE" {
+                registry.register(LrtVodExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LRTRadioIE" {
+                registry.register(LrtRadioExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LemondeIE" {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
