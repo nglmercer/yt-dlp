@@ -82,6 +82,7 @@ include!("tests_parts/expressen.rs");
 include!("tests_parts/espncricinfo.rs");
 include!("tests_parts/espn.rs");
 include!("tests_parts/espn_article.rs");
+include!("tests_parts/elpais.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");

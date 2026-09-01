@@ -181,6 +181,8 @@ impl ExtractorRegistry {
                 registry.register(EspnArticleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ESPNIE" {
                 registry.register(EspnExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ElPaisIE" {
+                registry.register(ElPaisExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
