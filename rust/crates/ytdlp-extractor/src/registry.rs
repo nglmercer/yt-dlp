@@ -444,6 +444,8 @@ impl ExtractorRegistry {
                 registry.register(MuseScoreExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MuxIE" {
                 registry.register(MuxExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MagellanTVIE" {
+                registry.register(MagellanTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
