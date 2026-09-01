@@ -290,6 +290,14 @@ impl ExtractorRegistry {
                 registry.register(GmaNetworkVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GermanupaIE" {
                 registry.register(GermanupaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HitRecordIE" {
+                registry.register(HitRecordExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HuajiaoIE" {
+                registry.register(HuajiaoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HytaleIE" {
+                registry.register(HytaleExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MonsterSirenHypergryphMusicIE" {
+                registry.register(MonsterSirenHypergryphMusicExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {

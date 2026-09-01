@@ -13,3 +13,4 @@ include!("audio_services_parts/epidemicsound.rs");
 include!("audio_services_parts/francais_facile.rs");
 include!("audio_services_parts/france_culture.rs");
 include!("audio_services_parts/radiofrance.rs");
+include!("audio_services_parts/hypergryph.rs");
