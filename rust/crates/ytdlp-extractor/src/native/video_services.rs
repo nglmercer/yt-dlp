@@ -127,6 +127,7 @@ include!("video_services_parts/kakao.rs");
 include!("video_services_parts/kenh14.rs");
 include!("video_services_parts/kankanews.rs");
 include!("video_services_parts/karaoketv.rs");
+include!("video_services_parts/kelbyone.rs");
 include!("video_services_parts/kika.rs");
 include!("video_services_parts/kick.rs");
 include!("video_services_parts/kicker.rs");

@@ -165,6 +165,7 @@ include!("tests_parts/kakao.rs");
 include!("tests_parts/kenh14.rs");
 include!("tests_parts/kankanews.rs");
 include!("tests_parts/karaoketv.rs");
+include!("tests_parts/kelbyone.rs");
 include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kicker.rs");

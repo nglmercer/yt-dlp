@@ -382,6 +382,8 @@ impl ExtractorRegistry {
                 registry.register(KankaNewsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KaraoketvIE" {
                 registry.register(KaraoketvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KelbyOneIE" {
+                registry.register(KelbyOneExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
