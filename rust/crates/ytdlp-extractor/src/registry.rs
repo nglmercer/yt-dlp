@@ -302,6 +302,10 @@ impl ExtractorRegistry {
                 registry.register(HgtvComShowExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HuffPostIE" {
                 registry.register(HuffPostExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HollywoodReporterIE" {
+                registry.register(HollywoodReporterExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HollywoodReporterPlaylistIE" {
+                registry.register(HollywoodReporterPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {

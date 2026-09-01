@@ -104,6 +104,7 @@ include!("video_services_parts/huajiao.rs");
 include!("video_services_parts/hgtv.rs");
 include!("video_services_parts/huffpost.rs");
 include!("video_services_parts/hytale.rs");
+include!("video_services_parts/hollywoodreporter.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
