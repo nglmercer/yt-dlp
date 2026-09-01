@@ -201,6 +201,7 @@ include!("tests_parts/melonvod.rs");
 include!("tests_parts/metacritic.rs");
 include!("tests_parts/mzaalo.rs");
 include!("tests_parts/murrtube.rs");
+include!("tests_parts/toggle.rs");
 include!("tests_parts/monstercat.rs");
 include!("tests_parts/mx3.rs");
 include!("tests_parts/mixlr.rs");

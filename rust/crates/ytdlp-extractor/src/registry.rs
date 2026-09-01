@@ -486,6 +486,10 @@ impl ExtractorRegistry {
                 registry.register(MzaaloExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MurrtubeIE" {
                 registry.register(MurrtubeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MeWatchIE" {
+                registry.register(MeWatchExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ToggleIE" {
+                registry.register(ToggleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MonstercatIE" {
                 registry.register(MonstercatExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Mx3IE"
