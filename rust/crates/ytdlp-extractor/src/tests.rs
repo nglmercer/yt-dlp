@@ -51,4 +51,5 @@ include!("tests_parts/canalsurmas.rs");
 include!("tests_parts/agalega.rs");
 include!("tests_parts/cloudycdn.rs");
 include!("tests_parts/cloudflarestream.rs");
+include!("tests_parts/dbtv.rs");
 include!("tests_parts/fathom.rs");
