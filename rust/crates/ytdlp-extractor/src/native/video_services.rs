@@ -23,4 +23,5 @@ include!("video_services_parts/canalalpha.rs");
 include!("video_services_parts/canalsurmas.rs");
 include!("video_services_parts/agalega.rs");
 include!("video_services_parts/cloudycdn.rs");
+include!("video_services_parts/cloudflarestream.rs");
 include!("video_services_parts/fathom.rs");
