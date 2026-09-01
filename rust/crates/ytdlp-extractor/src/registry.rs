@@ -217,6 +217,10 @@ impl ExtractorRegistry {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {
                 registry.register(Fox9NewsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FaulioIE" {
+                registry.register(FaulioExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FaulioLiveIE" {
+                registry.register(FaulioLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
