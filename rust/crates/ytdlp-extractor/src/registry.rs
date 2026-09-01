@@ -410,6 +410,8 @@ impl ExtractorRegistry {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
                 registry.register(LentaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LibraryOfCongressIE" {
+                registry.register(LibraryOfCongressExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
