@@ -157,6 +157,7 @@ self-update behavior.
 - [x] native DFB XML/tokenized HLS extractor with HDS TODO
 - [x] native DVTV player-object/video-playlist extractor with JavaScript-expression TODO
 - [x] native Deutschlandfunk audio-button and corpus playlist extractors
+- [x] native DR Bonanza HTML5/current-asset extractor
 - [x] native bTV Plus player-configuration/HLS extractor
 - [x] native BoxCast recorded-broadcast/HLS extractor with live TODO guard
 - [x] native BerufeTV metadata/player API extractor with subtitle support

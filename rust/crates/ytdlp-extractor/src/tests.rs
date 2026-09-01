@@ -66,3 +66,4 @@ include!("tests_parts/dfb.rs");
 include!("tests_parts/dvtv.rs");
 include!("tests_parts/fathom.rs");
 include!("tests_parts/dlf.rs");
+include!("tests_parts/drbonanza.rs");
