@@ -490,6 +490,10 @@ impl ExtractorRegistry {
                 registry.register(MeWatchExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ToggleIE" {
                 registry.register(ToggleExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MediaStreamIE" {
+                registry.register(MediaStreamExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "WinSportsVideoIE" {
+                registry.register(WinSportsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MonstercatIE" {
                 registry.register(MonstercatExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Mx3IE"
