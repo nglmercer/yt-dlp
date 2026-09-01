@@ -266,6 +266,8 @@ impl ExtractorRegistry {
                 registry.register(GlobalPlayerAudioEpisodeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GlobalPlayerVideoIE" {
                 registry.register(GlobalPlayerVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GameStarIE" {
+                registry.register(GameStarExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
                 registry.register(GettrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrStreamingIE" {
