@@ -95,6 +95,8 @@ impl ExtractorRegistry {
                 registry.register(BtvPlusExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BoxCastVideoIE" {
                 registry.register(BoxCastExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "BerufeTVIE" {
+                registry.register(BerufeTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
