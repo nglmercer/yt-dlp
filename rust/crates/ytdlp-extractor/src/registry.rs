@@ -201,6 +201,12 @@ impl ExtractorRegistry {
                 registry.register(FiveThirtyEightExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FreespeechIE" {
                 registry.register(FreespeechExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FoxNewsIE" {
+                registry.register(FoxNewsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FoxNewsVideoIE" {
+                registry.register(FoxNewsVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FoxNewsArticleIE" {
+                registry.register(FoxNewsArticleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {

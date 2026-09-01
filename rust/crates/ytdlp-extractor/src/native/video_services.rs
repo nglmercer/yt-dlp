@@ -60,6 +60,8 @@ include!("video_services_parts/embedly.rs");
 include!("video_services_parts/europeantour.rs");
 include!("video_services_parts/fivethirtyeight.rs");
 include!("video_services_parts/freespeech.rs");
+include!("video_services_parts/foxnews.rs");
+include!("video_services_parts/foxnews_wrappers.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");
