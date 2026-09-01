@@ -49,6 +49,7 @@ include!("video_services_parts/ertgr.rs");
 include!("video_services_parts/ertflix.rs");
 include!("video_services_parts/ertflix_web.rs");
 include!("video_services_parts/expressen.rs");
+include!("video_services_parts/espncricinfo.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");

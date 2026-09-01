@@ -79,6 +79,7 @@ include!("tests_parts/ertgr.rs");
 include!("tests_parts/ertflix.rs");
 include!("tests_parts/ertflix_web.rs");
 include!("tests_parts/expressen.rs");
+include!("tests_parts/espncricinfo.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
 include!("tests_parts/eroprofile_album.rs");
