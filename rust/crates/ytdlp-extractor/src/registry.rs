@@ -280,6 +280,8 @@ impl ExtractorRegistry {
                 registry.register(GlomexEmbedExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GlomexIE" {
                 registry.register(GlomexExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GiantBombIE" {
+                registry.register(GiantBombExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
