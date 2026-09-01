@@ -173,6 +173,10 @@ impl ExtractorRegistry {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
                 registry.register(EpidemicSoundExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EpiconIE" {
+                registry.register(EpiconExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EpiconSeriesIE" {
+                registry.register(EpiconSeriesExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EroProfileIE" {
                 registry.register(EroProfileExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
