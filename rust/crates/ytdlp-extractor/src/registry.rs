@@ -91,6 +91,10 @@ impl ExtractorRegistry {
                 registry.register(AltCensoredChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BongaCamsIE" {
                 registry.register(BongaCamsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "CrowdBunkerIE" {
+                registry.register(CrowdBunkerExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "CrowdBunkerChannelIE" {
+                registry.register(CrowdBunkerChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BTVPlusIE" {
                 registry.register(BtvPlusExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BoxCastVideoIE" {
