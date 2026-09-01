@@ -334,6 +334,8 @@ impl ExtractorRegistry {
                 registry.register(HuyaVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "InaIE" {
                 registry.register(InaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "InternazionaleIE" {
+                registry.register(InternazionaleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
