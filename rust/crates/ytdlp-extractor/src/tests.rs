@@ -188,6 +188,7 @@ include!("tests_parts/mux.rs");
 include!("tests_parts/magellantv.rs");
 include!("tests_parts/mediaklikk.rs");
 include!("tests_parts/mdr.rs");
+include!("tests_parts/meipai.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");
 include!("tests_parts/learningonscreen.rs");

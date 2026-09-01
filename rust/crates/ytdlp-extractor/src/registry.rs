@@ -450,6 +450,8 @@ impl ExtractorRegistry {
                 registry.register(MediaKlikkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MDRIE" {
                 registry.register(MdrExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MeipaiIE" {
+                registry.register(MeipaiExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
