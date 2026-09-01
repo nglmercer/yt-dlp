@@ -169,6 +169,8 @@ impl ExtractorRegistry {
                 registry.register(EuscreenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ERTWebtvEmbedIE" {
                 registry.register(ErtWebtvEmbedExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ErocastIE" {
+                registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
