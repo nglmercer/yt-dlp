@@ -58,4 +58,5 @@ include!("tests_parts/democracynow.rs");
 include!("tests_parts/dacast.rs");
 include!("tests_parts/dailymail.rs");
 include!("tests_parts/crtvg.rs");
+include!("tests_parts/cultureunplugged.rs");
 include!("tests_parts/fathom.rs");

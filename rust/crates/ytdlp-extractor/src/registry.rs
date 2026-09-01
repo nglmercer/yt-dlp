@@ -123,6 +123,8 @@ impl ExtractorRegistry {
                 registry.register(DailyMailExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CrtvgIE" {
                 registry.register(CrtvgExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "CultureUnpluggedIE" {
+                registry.register(CultureUnpluggedExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
