@@ -147,6 +147,8 @@ include!("tests_parts/hungama.rs");
 include!("tests_parts/hbo.rs");
 include!("tests_parts/huya_video.rs");
 include!("tests_parts/ina.rs");
+include!("tests_parts/ivideon.rs");
+include!("tests_parts/ilpost.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

@@ -15,3 +15,4 @@ include!("audio_services_parts/france_culture.rs");
 include!("audio_services_parts/radiofrance.rs");
 include!("audio_services_parts/hypergryph.rs");
 include!("audio_services_parts/hearthisat.rs");
+include!("audio_services_parts/ilpost.rs");

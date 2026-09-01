@@ -75,6 +75,8 @@ impl ExtractorRegistry {
                 registry.register(HistoricFilmsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "OnePlacePodcastIE" {
                 registry.register(OnePlacePodcastExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "IlPostIE" {
+                registry.register(IlPostExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MegaphoneIE" {
                 registry.register(MegaphoneExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HypemIE" {
@@ -85,6 +87,8 @@ impl ExtractorRegistry {
                 registry.register(SkylineWebcamsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "WebcameraplIE" {
                 registry.register(WebcameraplExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "IvideonIE" {
+                registry.register(IvideonExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AltCensoredIE" {
                 registry.register(AltCensoredExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AltCensoredChannelIE" {
