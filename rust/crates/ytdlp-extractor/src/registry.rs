@@ -456,6 +456,8 @@ impl ExtractorRegistry {
                 registry.register(MirrativExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MirrativUserIE" {
                 registry.register(MirrativUserExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MaoriTVIE" {
+                registry.register(MaoriTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {
