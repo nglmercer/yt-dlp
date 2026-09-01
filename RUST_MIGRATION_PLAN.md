@@ -157,6 +157,7 @@ self-update behavior.
 - [x] native Canal Alpha server-state/progressive/HLS/DASH extractor
 - [x] native Canal Sur Más Interactvty API/stream extractor
 - [x] native A Galega Interactvty API/HLS extractor
+- [x] native CloudyCDN player API/HLS extractor
 - [x] native AudioBoom embedded clip-store/audio extractor
 - [x] native Bandcamp track JSON/audio extractor
 - [x] native BannedVideo GraphQL metadata/media/comment extractor
