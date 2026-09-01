@@ -183,6 +183,8 @@ impl ExtractorRegistry {
                 registry.register(EspnExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ElPaisIE" {
                 registry.register(ElPaisExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EuroParlWebstreamIE" {
+                registry.register(EuroParlWebstreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
