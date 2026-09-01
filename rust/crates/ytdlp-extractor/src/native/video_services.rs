@@ -85,6 +85,7 @@ include!("video_services_parts/gotostage.rs");
 include!("video_services_parts/gbnews.rs");
 include!("video_services_parts/gaskrank.rs");
 include!("video_services_parts/gamespot.rs");
+include!("video_services_parts/gopro.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

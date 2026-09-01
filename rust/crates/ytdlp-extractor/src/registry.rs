@@ -250,6 +250,8 @@ impl ExtractorRegistry {
                 registry.register(GaskrankExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GameSpotIE" {
                 registry.register(GameSpotExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GoProIE" {
+                registry.register(GoProExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
                 registry.register(GettrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrStreamingIE" {

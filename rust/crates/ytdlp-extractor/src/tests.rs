@@ -117,6 +117,7 @@ include!("tests_parts/gotostage.rs");
 include!("tests_parts/gbnews.rs");
 include!("tests_parts/gaskrank.rs");
 include!("tests_parts/gamespot.rs");
+include!("tests_parts/gopro.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");
 include!("tests_parts/uplynk.rs");
