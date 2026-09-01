@@ -163,6 +163,7 @@ include!("video_services_parts/musescore.rs");
 include!("video_services_parts/mux.rs");
 include!("video_services_parts/magellantv.rs");
 include!("video_services_parts/mediaklikk.rs");
+include!("video_services_parts/mdr.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");

@@ -448,6 +448,8 @@ impl ExtractorRegistry {
                 registry.register(MagellanTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MediaKlikkIE" {
                 registry.register(MediaKlikkExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MDRIE" {
+                registry.register(MdrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
