@@ -163,6 +163,8 @@ impl ExtractorRegistry {
                 registry.register(DrTuberExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ERRJupiterIE" {
                 registry.register(ErrJupiterExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ERRArhiivIE" {
+                registry.register(ErrArhiivExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EUScreenIE" {
                 registry.register(EuscreenExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
