@@ -182,6 +182,7 @@ include!("tests_parts/medaltv.rs");
 include!("tests_parts/mave.rs");
 include!("tests_parts/mbn.rs");
 include!("tests_parts/museai.rs");
+include!("tests_parts/musescore.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");
 include!("tests_parts/learningonscreen.rs");

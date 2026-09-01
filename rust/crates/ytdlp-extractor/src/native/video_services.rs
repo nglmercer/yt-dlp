@@ -158,6 +158,7 @@ include!("video_services_parts/maariv.rs");
 include!("video_services_parts/medaltv.rs");
 include!("video_services_parts/mbn.rs");
 include!("video_services_parts/museai.rs");
+include!("video_services_parts/musescore.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
