@@ -271,6 +271,56 @@ fn json_object_after_marker(text: &str, marker: &str) -> Option<serde_json::Valu
     None
 }
 
+fn json_objects_after_marker(text: &str, marker: &str) -> Vec<serde_json::Value> {
+    let mut values = Vec::new();
+    let mut search_start = 0usize;
+    while let Some(marker_offset) = text[search_start..].find(marker) {
+        let marker_start = search_start + marker_offset;
+        let object_start = marker_start + marker.len();
+        let remainder = &text[object_start..];
+        let Some(open_offset) = remainder.find('{') else {
+            search_start = object_start;
+            continue;
+        };
+        let bytes = remainder.as_bytes();
+        let mut depth = 0usize;
+        let mut in_string = false;
+        let mut escaped = false;
+        let mut consumed = None;
+        for (offset, byte) in bytes.iter().enumerate().skip(open_offset) {
+            if in_string {
+                if escaped {
+                    escaped = false;
+                } else if *byte == b'\\' {
+                    escaped = true;
+                } else if *byte == b'"' {
+                    in_string = false;
+                }
+                continue;
+            }
+            match *byte {
+                b'"' => in_string = true,
+                b'{' => depth = depth.saturating_add(1),
+                b'}' => {
+                    depth = depth.checked_sub(1).unwrap_or_default();
+                    if depth == 0 {
+                        consumed = Some(offset + 1);
+                        if let Some(value) = parse_common_javascript_value(
+                            &String::from_utf8_lossy(&bytes[open_offset..=offset]),
+                        ) {
+                            values.push(value);
+                        }
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        search_start = object_start + consumed.unwrap_or(remainder.len());
+    }
+    values
+}
+
 fn json_array_after_marker(text: &str, marker: &str) -> Option<serde_json::Value> {
     let marker_start = text.find(marker)?;
     let remainder = &text[marker_start + marker.len()..];

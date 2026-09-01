@@ -135,6 +135,8 @@ impl ExtractorRegistry {
                 registry.register(DigitekaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DFBIE" {
                 registry.register(DfbExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DVTVIE" {
+                registry.register(DvtvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
