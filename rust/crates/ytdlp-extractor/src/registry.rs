@@ -418,6 +418,10 @@ impl ExtractorRegistry {
                 registry.register(LecturioDeCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LiTVIE" {
                 registry.register(LitvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LifeEmbedIE" {
+                registry.register(LifeEmbedExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LifeNewsIE" {
+                registry.register(LifeNewsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
