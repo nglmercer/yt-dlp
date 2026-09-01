@@ -120,6 +120,7 @@ include!("tests_parts/gamespot.rs");
 include!("tests_parts/gopro.rs");
 include!("tests_parts/gronkh.rs");
 include!("tests_parts/goodgame.rs");
+include!("tests_parts/globalplayer.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");
 include!("tests_parts/uplynk.rs");

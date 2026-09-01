@@ -256,6 +256,16 @@ impl ExtractorRegistry {
                 registry.register(GronkhExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GoodGameIE" {
                 registry.register(GoodGameExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlobalPlayerLiveIE" {
+                registry.register(GlobalPlayerLiveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlobalPlayerLivePlaylistIE" {
+                registry.register(GlobalPlayerLivePlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlobalPlayerAudioIE" {
+                registry.register(GlobalPlayerAudioExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlobalPlayerAudioEpisodeIE" {
+                registry.register(GlobalPlayerAudioEpisodeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GlobalPlayerVideoIE" {
+                registry.register(GlobalPlayerVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
                 registry.register(GettrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrStreamingIE" {
