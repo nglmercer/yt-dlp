@@ -105,6 +105,8 @@ include!("tests_parts/flextv.rs");
 include!("tests_parts/firsttv.rs");
 include!("tests_parts/fourtube.rs");
 include!("tests_parts/filmon.rs");
+include!("tests_parts/funk.rs");
+include!("tests_parts/formula1.rs");
 include!("tests_parts/francais_facile.rs");
 include!("tests_parts/france_culture.rs");
 include!("tests_parts/radiofrance.rs");

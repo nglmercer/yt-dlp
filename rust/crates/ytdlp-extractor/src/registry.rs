@@ -222,6 +222,10 @@ impl ExtractorRegistry {
                 registry.register(FilmOnExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FilmOnChannelIE" {
                 registry.register(FilmOnChannelExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FunkIE" {
+                registry.register(FunkExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Formula1IE" {
+                registry.register(Formula1Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9IE" {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {

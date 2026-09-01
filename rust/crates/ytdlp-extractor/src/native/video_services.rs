@@ -75,6 +75,8 @@ include!("video_services_parts/flextv.rs");
 include!("video_services_parts/firsttv.rs");
 include!("video_services_parts/fourtube.rs");
 include!("video_services_parts/filmon.rs");
+include!("video_services_parts/funk.rs");
+include!("video_services_parts/formula1.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");
