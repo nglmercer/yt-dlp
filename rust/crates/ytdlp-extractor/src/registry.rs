@@ -296,12 +296,16 @@ impl ExtractorRegistry {
                 registry.register(HuajiaoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HytaleIE" {
                 registry.register(HytaleExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HearThisAtIE" {
+                registry.register(HearThisAtExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MonsterSirenHypergryphMusicIE" {
                 registry.register(MonsterSirenHypergryphMusicExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HGTVComShowIE" {
                 registry.register(HgtvComShowExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HuffPostIE" {
                 registry.register(HuffPostExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HellPornoIE" {
+                registry.register(HellPornoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HollywoodReporterIE" {
                 registry.register(HollywoodReporterExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HollywoodReporterPlaylistIE" {
