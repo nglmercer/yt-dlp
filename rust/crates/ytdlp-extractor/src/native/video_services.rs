@@ -110,6 +110,7 @@ include!("video_services_parts/hrfernsehen.rs");
 include!("video_services_parts/hse.rs");
 include!("video_services_parts/heise.rs");
 include!("video_services_parts/hungama.rs");
+include!("video_services_parts/hbo.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

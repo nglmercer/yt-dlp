@@ -144,6 +144,7 @@ include!("tests_parts/hrfernsehen.rs");
 include!("tests_parts/hse.rs");
 include!("tests_parts/heise.rs");
 include!("tests_parts/hungama.rs");
+include!("tests_parts/hbo.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

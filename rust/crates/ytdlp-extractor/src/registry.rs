@@ -324,6 +324,8 @@ impl ExtractorRegistry {
                 registry.register(HungamaSongExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HungamaAlbumPlaylistIE" {
                 registry.register(HungamaAlbumPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HBOIE" {
+                registry.register(HboExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
