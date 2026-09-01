@@ -422,6 +422,8 @@ impl ExtractorRegistry {
                 registry.register(LastFmPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LastFMUserIE" {
                 registry.register(LastFmUserExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LumniIE" {
+                registry.register(LumniExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LibsynIE" {
                 registry.register(LibsynExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ListenNotesIE" {

@@ -177,6 +177,7 @@ include!("tests_parts/libsyn.rs");
 include!("tests_parts/listennotes.rs");
 include!("tests_parts/likee.rs");
 include!("tests_parts/lastfm.rs");
+include!("tests_parts/lumni.rs");
 include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kicker.rs");

@@ -146,6 +146,7 @@ include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
 include!("video_services_parts/lastfm.rs");
 include!("video_services_parts/likee.rs");
+include!("video_services_parts/lumni.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
