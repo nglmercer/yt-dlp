@@ -153,6 +153,10 @@ impl ExtractorRegistry {
                 registry.register(DliveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DLiveStreamIE" {
                 registry.register(DliveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DailyWireIE" {
+                registry.register(DailyWireExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DailyWirePodcastIE" {
+                registry.register(DailyWireExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

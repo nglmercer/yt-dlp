@@ -161,6 +161,7 @@ self-update behavior.
 - [x] native Duoplay session-registered HLS extractor
 - [x] native 2M.ma replay and news API extractors
 - [x] native DLive GraphQL VOD/live HLS extractors
+- [x] native Daily Wire Next.js episode/video and podcast extractors
 - [x] native bTV Plus player-configuration/HLS extractor
 - [x] native BoxCast recorded-broadcast/HLS extractor with live TODO guard
 - [x] native BerufeTV metadata/player API extractor with subtitle support

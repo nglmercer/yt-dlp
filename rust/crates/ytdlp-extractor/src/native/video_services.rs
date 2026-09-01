@@ -40,4 +40,5 @@ include!("video_services_parts/drbonanza.rs");
 include!("video_services_parts/duoplay.rs");
 include!("video_services_parts/deuxm.rs");
 include!("video_services_parts/dlive.rs");
+include!("video_services_parts/dailywire.rs");
 include!("video_services_parts/fathom.rs");
