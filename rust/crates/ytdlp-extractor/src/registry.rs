@@ -424,6 +424,8 @@ impl ExtractorRegistry {
                 registry.register(LifeNewsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ManyVidsIE" {
                 registry.register(ManyVidsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MassengeschmackTVIE" {
+                registry.register(MassengeschmackExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {

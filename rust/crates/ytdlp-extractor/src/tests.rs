@@ -176,6 +176,7 @@ include!("tests_parts/lecturio.rs");
 include!("tests_parts/litv.rs");
 include!("tests_parts/lifenews.rs");
 include!("tests_parts/manyvids.rs");
+include!("tests_parts/massengeschmack.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");
 include!("tests_parts/learningonscreen.rs");
