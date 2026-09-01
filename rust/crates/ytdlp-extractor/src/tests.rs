@@ -194,6 +194,7 @@ include!("tests_parts/maoritv.rs");
 include!("tests_parts/magentamusik.rs");
 include!("tests_parts/minds.rs");
 include!("tests_parts/mangomolo.rs");
+include!("tests_parts/markiza.rs");
 include!("tests_parts/mixlr.rs");
 include!("tests_parts/lrt.rs");
 include!("tests_parts/lefigaro.rs");

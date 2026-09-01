@@ -470,6 +470,10 @@ impl ExtractorRegistry {
                 registry.register(MangomoloVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MangomoloLiveIE" {
                 registry.register(MangomoloLiveExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MarkizaIE" {
+                registry.register(MarkizaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MarkizaPageIE" {
+                registry.register(MarkizaPageExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {
