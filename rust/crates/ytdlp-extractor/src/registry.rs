@@ -384,6 +384,10 @@ impl ExtractorRegistry {
                 registry.register(KaraoketvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KelbyOneIE" {
                 registry.register(KelbyOneExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KhanAcademyIE" {
+                registry.register(KhanAcademyExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KhanAcademyUnitIE" {
+                registry.register(KhanAcademyUnitExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaIE" {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
