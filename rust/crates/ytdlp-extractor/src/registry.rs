@@ -474,6 +474,10 @@ impl ExtractorRegistry {
                 registry.register(MarkizaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MarkizaPageIE" {
                 registry.register(MarkizaPageExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MochaVideoIE" {
+                registry.register(MochaVideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MojevideoIE" {
+                registry.register(MojevideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {

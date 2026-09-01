@@ -171,6 +171,8 @@ include!("video_services_parts/magentamusik.rs");
 include!("video_services_parts/minds.rs");
 include!("video_services_parts/mangomolo.rs");
 include!("video_services_parts/markiza.rs");
+include!("video_services_parts/mocha.rs");
+include!("video_services_parts/mojevideo.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
