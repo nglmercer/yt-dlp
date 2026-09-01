@@ -428,6 +428,8 @@ impl ExtractorRegistry {
                 registry.register(MassengeschmackExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MaarivIE" {
                 registry.register(MaarivExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MedalTVIE" {
+                registry.register(MedalTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {

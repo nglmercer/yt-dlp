@@ -155,6 +155,7 @@ include!("video_services_parts/lifenews.rs");
 include!("video_services_parts/manyvids.rs");
 include!("video_services_parts/massengeschmack.rs");
 include!("video_services_parts/maariv.rs");
+include!("video_services_parts/medaltv.rs");
 include!("video_services_parts/lemonde.rs");
 include!("video_services_parts/lenta.rs");
 include!("video_services_parts/libraryofcongress.rs");
