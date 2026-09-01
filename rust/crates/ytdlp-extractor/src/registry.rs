@@ -185,6 +185,10 @@ impl ExtractorRegistry {
                 registry.register(ElPaisExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EuroParlWebstreamIE" {
                 registry.register(EuroParlWebstreamExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EggheadCourseIE" {
+                registry.register(EggheadCourseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EggheadLessonIE" {
+                registry.register(EggheadLessonExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
