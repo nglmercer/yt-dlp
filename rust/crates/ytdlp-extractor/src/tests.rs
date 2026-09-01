@@ -140,6 +140,7 @@ include!("tests_parts/hgtv.rs");
 include!("tests_parts/huffpost.rs");
 include!("tests_parts/hellporno.rs");
 include!("tests_parts/hollywoodreporter.rs");
+include!("tests_parts/hrfernsehen.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

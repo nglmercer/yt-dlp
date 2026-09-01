@@ -106,6 +106,7 @@ include!("video_services_parts/huffpost.rs");
 include!("video_services_parts/hytale.rs");
 include!("video_services_parts/hellporno.rs");
 include!("video_services_parts/hollywoodreporter.rs");
+include!("video_services_parts/hrfernsehen.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
