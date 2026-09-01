@@ -340,6 +340,8 @@ impl ExtractorRegistry {
                 registry.register(IcareusExtractor::new(descriptor)?)?;
             } else if descriptor.key == "IxiguaIE" {
                 registry.register(IxiguaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "ImdbIE" {
+                registry.register(ImdbExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
