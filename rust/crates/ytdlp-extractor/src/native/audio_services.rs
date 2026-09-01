@@ -9,3 +9,4 @@ include!("audio_services_parts/art19.rs");
 include!("audio_services_parts/reverbnation.rs");
 include!("audio_services_parts/dlf.rs");
 include!("audio_services_parts/erocast.rs");
+include!("audio_services_parts/epidemicsound.rs");

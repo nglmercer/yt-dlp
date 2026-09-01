@@ -78,3 +78,4 @@ include!("tests_parts/euscreen.rs");
 include!("tests_parts/ertgr.rs");
 include!("tests_parts/erocast.rs");
 include!("tests_parts/eroprofile.rs");
+include!("tests_parts/epidemicsound.rs");
