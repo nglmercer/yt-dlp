@@ -274,6 +274,8 @@ impl ExtractorRegistry {
                 registry.register(GameStarExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GodResourceIE" {
                 registry.register(GodResourceExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GodTubeIE" {
+                registry.register(GodTubeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
