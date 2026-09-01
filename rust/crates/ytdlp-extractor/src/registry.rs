@@ -452,6 +452,10 @@ impl ExtractorRegistry {
                 registry.register(MdrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MeipaiIE" {
                 registry.register(MeipaiExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MirrativIE" {
+                registry.register(MirrativExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MirrativUserIE" {
+                registry.register(MirrativUserExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
