@@ -382,6 +382,12 @@ impl ExtractorRegistry {
                 registry.register(KikaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KikaPlaylistIE" {
                 registry.register(KikaPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KickIE" {
+                registry.register(KickExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KickVODIE" {
+                registry.register(KickVodExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KickClipIE" {
+                registry.register(KickClipExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KickStarterIE" {
                 registry.register(KickstarterExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KukuluLiveIE" {
