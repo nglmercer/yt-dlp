@@ -318,6 +318,12 @@ impl ExtractorRegistry {
                 registry.register(HseShowExtractor::new(descriptor)?)?;
             } else if descriptor.key == "HeiseIE" {
                 registry.register(HeiseExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HungamaIE" {
+                registry.register(HungamaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HungamaSongIE" {
+                registry.register(HungamaSongExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HungamaAlbumPlaylistIE" {
+                registry.register(HungamaAlbumPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
