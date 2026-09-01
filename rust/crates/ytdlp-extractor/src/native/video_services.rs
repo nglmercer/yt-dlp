@@ -118,6 +118,7 @@ include!("video_services_parts/icareus.rs");
 include!("video_services_parts/ixigua.rs");
 include!("video_services_parts/imdb.rs");
 include!("video_services_parts/infoq.rs");
+include!("video_services_parts/iltalehti.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

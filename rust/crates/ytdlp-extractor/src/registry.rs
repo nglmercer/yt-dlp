@@ -344,6 +344,8 @@ impl ExtractorRegistry {
                 registry.register(ImdbExtractor::new(descriptor)?)?;
             } else if descriptor.key == "InfoQIE" {
                 registry.register(InfoqExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "IltalehtiIE" {
+                registry.register(IltalehtiExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
