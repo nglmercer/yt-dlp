@@ -218,6 +218,10 @@ impl ExtractorRegistry {
                 "FourTubeIE" | "FuxIE" | "PornTubeIE" | "PornerBrosIE"
             ) {
                 registry.register(FourTubeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FilmOnIE" {
+                registry.register(FilmOnExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FilmOnChannelIE" {
+                registry.register(FilmOnChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9IE" {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {
