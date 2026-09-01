@@ -163,6 +163,7 @@ include!("tests_parts/jiosaavn.rs");
 include!("tests_parts/jamendo.rs");
 include!("tests_parts/kakao.rs");
 include!("tests_parts/kenh14.rs");
+include!("tests_parts/kika.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

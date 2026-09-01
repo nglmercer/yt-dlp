@@ -378,6 +378,10 @@ impl ExtractorRegistry {
                 registry.register(Kenh14PlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Kenh14VideoIE" {
                 registry.register(Kenh14VideoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KikaIE" {
+                registry.register(KikaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KikaPlaylistIE" {
+                registry.register(KikaPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
