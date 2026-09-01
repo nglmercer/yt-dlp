@@ -6,7 +6,7 @@ fn lecturio_get_json(
     display_id: &str,
 ) -> Result<serde_json::Value, ExtractorError> {
     let endpoint = format!("{LECTURIO_API_BASE}{path}");
-    let response = context.get(&endpoint)?;
+    let response = context.request_with_status(&Request::new(&endpoint), &[401, 403])?;
     if response.status() == 401 || response.status() == 403 {
         return Err(ExtractorError::new(
             ExtractorErrorKind::Unsupported,
