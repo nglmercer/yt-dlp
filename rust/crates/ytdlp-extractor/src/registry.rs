@@ -113,6 +113,8 @@ impl ExtractorRegistry {
                 registry.register(Canal1Extractor::new(descriptor)?)?;
             } else if descriptor.key == "CCMAIE" {
                 registry.register(CcmaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DemocracynowIE" {
+                registry.register(DemocracynowExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
