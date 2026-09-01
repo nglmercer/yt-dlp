@@ -131,6 +131,8 @@ impl ExtractorRegistry {
                 registry.register(CultureUnpluggedExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CtsNewsIE" {
                 registry.register(CtsNewsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DigitekaIE" {
+                registry.register(DigitekaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
