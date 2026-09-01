@@ -42,4 +42,5 @@ include!("video_services_parts/deuxm.rs");
 include!("video_services_parts/dlive.rs");
 include!("video_services_parts/dailywire.rs");
 include!("video_services_parts/dropbox.rs");
+include!("video_services_parts/drtuber.rs");
 include!("video_services_parts/fathom.rs");

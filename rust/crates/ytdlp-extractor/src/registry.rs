@@ -159,6 +159,8 @@ impl ExtractorRegistry {
                 registry.register(DailyWireExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DropboxIE" {
                 registry.register(DropboxExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DrTuberIE" {
+                registry.register(DrTuberExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

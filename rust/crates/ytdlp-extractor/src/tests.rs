@@ -72,3 +72,4 @@ include!("tests_parts/deuxm.rs");
 include!("tests_parts/dlive.rs");
 include!("tests_parts/dailywire.rs");
 include!("tests_parts/dropbox.rs");
+include!("tests_parts/drtuber.rs");
