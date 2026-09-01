@@ -195,6 +195,8 @@ impl ExtractorRegistry {
                 registry.register(EggsArtistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EmbedlyIE" {
                 registry.register(EmbedlyExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EuropeanTourIE" {
+                registry.register(EuropeanTourExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
