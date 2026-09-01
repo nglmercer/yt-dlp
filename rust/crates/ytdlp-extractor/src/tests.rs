@@ -135,6 +135,8 @@ include!("tests_parts/hitrecord.rs");
 include!("tests_parts/huajiao.rs");
 include!("tests_parts/hytale.rs");
 include!("tests_parts/hypergryph.rs");
+include!("tests_parts/hgtv.rs");
+include!("tests_parts/huffpost.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");

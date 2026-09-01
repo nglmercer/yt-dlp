@@ -298,6 +298,10 @@ impl ExtractorRegistry {
                 registry.register(HytaleExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MonsterSirenHypergryphMusicIE" {
                 registry.register(MonsterSirenHypergryphMusicExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HGTVComShowIE" {
+                registry.register(HgtvComShowExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "HuffPostIE" {
+                registry.register(HuffPostExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
