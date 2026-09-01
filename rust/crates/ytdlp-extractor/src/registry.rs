@@ -213,6 +213,11 @@ impl ExtractorRegistry {
                 registry.register(Funker530Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FifaIE" {
                 registry.register(FifaExtractor::new(descriptor)?)?;
+            } else if matches!(
+                descriptor.key.as_str(),
+                "FourTubeIE" | "FuxIE" | "PornTubeIE" | "PornerBrosIE"
+            ) {
+                registry.register(FourTubeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9IE" {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {
