@@ -153,6 +153,7 @@ include!("tests_parts/internazionale.rs");
 include!("tests_parts/icareus.rs");
 include!("tests_parts/ixigua.rs");
 include!("tests_parts/imdb.rs");
+include!("tests_parts/infoq.rs");
 include!("tests_parts/gab.rs");
 include!("tests_parts/gettr.rs");
 include!("tests_parts/radiofrance.rs");
