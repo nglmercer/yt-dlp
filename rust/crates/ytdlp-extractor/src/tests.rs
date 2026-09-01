@@ -111,6 +111,7 @@ include!("tests_parts/frontendmasters.rs");
 include!("tests_parts/fptplay.rs");
 include!("tests_parts/francais_facile.rs");
 include!("tests_parts/foxsports.rs");
+include!("tests_parts/francetv.rs");
 include!("tests_parts/france_culture.rs");
 include!("tests_parts/radiofrance.rs");
 include!("tests_parts/uplynk.rs");

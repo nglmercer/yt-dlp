@@ -230,6 +230,12 @@ impl ExtractorRegistry {
                 registry.register(Formula1Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FptplayIE" {
                 registry.register(FptplayExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FranceTVIE" {
+                registry.register(FranceTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FranceTVSiteIE" {
+                registry.register(FranceTvSiteExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FranceTVInfoIE" {
+                registry.register(FranceTvInfoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersIE" {
                 registry.register(FrontendMastersExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersLessonIE" {
