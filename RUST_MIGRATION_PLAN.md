@@ -152,6 +152,7 @@ self-update behavior.
 - [x] native AltCensored Archive.org transparent video and channel playlist extractors
 - [x] native BongaCams room API/live HLS extractor
 - [x] native CrowdBunker video API/channel pagination extractor
+- [x] native CTS News direct feed extractor with YouTube fallback TODO
 - [x] native bTV Plus player-configuration/HLS extractor
 - [x] native BoxCast recorded-broadcast/HLS extractor with live TODO guard
 - [x] native BerufeTV metadata/player API extractor with subtitle support
