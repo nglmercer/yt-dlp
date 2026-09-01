@@ -127,6 +127,7 @@ include!("video_services_parts/kakao.rs");
 include!("video_services_parts/kenh14.rs");
 include!("video_services_parts/kika.rs");
 include!("video_services_parts/kickstarter.rs");
+include!("video_services_parts/kukululive.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

@@ -384,6 +384,8 @@ impl ExtractorRegistry {
                 registry.register(KikaPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KickStarterIE" {
                 registry.register(KickstarterExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KukuluLiveIE" {
+                registry.register(KukuluLiveExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
