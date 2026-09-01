@@ -68,3 +68,4 @@ include!("tests_parts/fathom.rs");
 include!("tests_parts/dlf.rs");
 include!("tests_parts/drbonanza.rs");
 include!("tests_parts/duoplay.rs");
+include!("tests_parts/deuxm.rs");
