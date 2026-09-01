@@ -380,6 +380,8 @@ impl ExtractorRegistry {
                 registry.register(Kenh14VideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KankaNewsIE" {
                 registry.register(KankaNewsExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KatsomoIE" {
+                registry.register(KatsomoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KaraoketvIE" {
                 registry.register(KaraoketvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KelbyOneIE" {
