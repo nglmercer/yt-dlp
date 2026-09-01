@@ -226,6 +226,12 @@ impl ExtractorRegistry {
                 registry.register(FunkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Formula1IE" {
                 registry.register(Formula1Extractor::new(descriptor)?)?;
+            } else if descriptor.key == "FrontendMastersIE" {
+                registry.register(FrontendMastersExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FrontendMastersLessonIE" {
+                registry.register(FrontendMastersLessonExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FrontendMastersCourseIE" {
+                registry.register(FrontendMastersCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9IE" {
                 registry.register(Fox9Extractor::new(descriptor)?)?;
             } else if descriptor.key == "FOX9NewsIE" {
