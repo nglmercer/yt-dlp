@@ -124,6 +124,7 @@ include!("video_services_parts/jove.rs");
 include!("video_services_parts/joj.rs");
 include!("video_services_parts/jtbc.rs");
 include!("video_services_parts/kakao.rs");
+include!("video_services_parts/kenh14.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");

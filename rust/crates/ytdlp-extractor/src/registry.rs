@@ -374,6 +374,10 @@ impl ExtractorRegistry {
                 registry.register(JamendoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KakaoIE" {
                 registry.register(KakaoExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Kenh14PlaylistIE" {
+                registry.register(Kenh14PlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Kenh14VideoIE" {
+                registry.register(Kenh14VideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GabIE" {
                 registry.register(GabExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GettrIE" {
