@@ -46,6 +46,7 @@ include!("video_services_parts/drtuber.rs");
 include!("video_services_parts/err.rs");
 include!("video_services_parts/euscreen.rs");
 include!("video_services_parts/ertgr.rs");
+include!("video_services_parts/ertflix.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
 include!("video_services_parts/epicon.rs");
