@@ -486,6 +486,13 @@ impl ExtractorRegistry {
                 registry.register(MzaaloExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MurrtubeIE" {
                 registry.register(MurrtubeExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MonstercatIE" {
+                registry.register(MonstercatExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "Mx3IE"
+                || descriptor.key == "Mx3NeoIE"
+                || descriptor.key == "Mx3VolksmusikIE"
+            {
+                registry.register(Mx3Extractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrIE" {
                 registry.register(MixlrExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MixlrRecoringIE" {

@@ -23,3 +23,5 @@ include!("audio_services_parts/libsyn.rs");
 include!("audio_services_parts/listennotes.rs");
 include!("audio_services_parts/mave.rs");
 include!("audio_services_parts/mixlr.rs");
+include!("audio_services_parts/monstercat.rs");
+include!("audio_services_parts/mx3.rs");
