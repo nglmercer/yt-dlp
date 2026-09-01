@@ -431,6 +431,8 @@ impl ExtractorRegistry {
                 registry.register(VocarooExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FreesoundIE" {
                 registry.register(FreesoundExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FrancaisFacileIE" {
+                registry.register(FrancaisFacileExtractor::new(descriptor)?)?;
             } else if descriptor.key == "YandexDiskIE" {
                 registry.register(YandexDiskExtractor::new(descriptor)?)?;
             } else if descriptor.key == "RumbleEmbedIE" {
