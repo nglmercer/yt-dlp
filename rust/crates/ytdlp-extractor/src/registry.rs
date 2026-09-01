@@ -227,6 +227,10 @@ impl ExtractorRegistry {
                 registry.register(FiveTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FlickrIE" {
                 registry.register(FlickrExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FreeTvMoviesIE" {
+                registry.register(FreeTvMoviesExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "FreeTvIE" {
+                registry.register(FreeTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "ErocastIE" {
                 registry.register(ErocastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpidemicSoundIE" {
