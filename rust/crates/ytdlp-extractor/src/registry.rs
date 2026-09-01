@@ -226,6 +226,8 @@ impl ExtractorRegistry {
                 registry.register(FunkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Formula1IE" {
                 registry.register(Formula1Extractor::new(descriptor)?)?;
+            } else if descriptor.key == "FptplayIE" {
+                registry.register(FptplayExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersIE" {
                 registry.register(FrontendMastersExtractor::new(descriptor)?)?;
             } else if descriptor.key == "FrontendMastersLessonIE" {

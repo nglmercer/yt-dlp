@@ -108,6 +108,7 @@ include!("tests_parts/filmon.rs");
 include!("tests_parts/funk.rs");
 include!("tests_parts/formula1.rs");
 include!("tests_parts/frontendmasters.rs");
+include!("tests_parts/fptplay.rs");
 include!("tests_parts/francais_facile.rs");
 include!("tests_parts/france_culture.rs");
 include!("tests_parts/radiofrance.rs");

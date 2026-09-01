@@ -77,6 +77,7 @@ include!("video_services_parts/fourtube.rs");
 include!("video_services_parts/filmon.rs");
 include!("video_services_parts/funk.rs");
 include!("video_services_parts/formula1.rs");
+include!("video_services_parts/fptplay.rs");
 include!("video_services_parts/frontendmasters.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
