@@ -111,6 +111,8 @@ impl ExtractorRegistry {
                 registry.register(DbtvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Canal1IE" {
                 registry.register(Canal1Extractor::new(descriptor)?)?;
+            } else if descriptor.key == "CCMAIE" {
+                registry.register(CcmaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {

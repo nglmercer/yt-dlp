@@ -26,4 +26,5 @@ include!("video_services_parts/cloudycdn.rs");
 include!("video_services_parts/cloudflarestream.rs");
 include!("video_services_parts/dbtv.rs");
 include!("video_services_parts/canal1.rs");
+include!("video_services_parts/ccma.rs");
 include!("video_services_parts/fathom.rs");
