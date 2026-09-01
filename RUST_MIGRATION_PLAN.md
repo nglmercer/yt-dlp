@@ -160,6 +160,7 @@ self-update behavior.
 - [x] native CloudyCDN player API/HLS extractor
 - [x] native Cloudflare Stream signed-ID/HLS/DASH extractor
 - [x] native DBTV transparent JWPlatform/YouTube wrapper
+- [x] native Canal 1 transparent embedded-player wrapper
 - [x] native AudioBoom embedded clip-store/audio extractor
 - [x] native Bandcamp track JSON/audio extractor
 - [x] native BannedVideo GraphQL metadata/media/comment extractor
