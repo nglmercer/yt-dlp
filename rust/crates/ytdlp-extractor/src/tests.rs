@@ -172,6 +172,7 @@ include!("tests_parts/kuwo.rs");
 include!("tests_parts/lnk.rs");
 include!("tests_parts/lecture2go.rs");
 include!("tests_parts/lrt.rs");
+include!("tests_parts/lefigaro.rs");
 include!("tests_parts/lemonde_lenta.rs");
 include!("tests_parts/libraryofcongress.rs");
 include!("tests_parts/libsyn.rs");

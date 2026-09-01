@@ -412,6 +412,10 @@ impl ExtractorRegistry {
                 registry.register(LrtVodExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTRadioIE" {
                 registry.register(LrtRadioExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LeFigaroVideoEmbedIE" {
+                registry.register(LeFigaroVideoEmbedExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "LeFigaroVideoSectionIE" {
+                registry.register(LeFigaroVideoSectionExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LemondeIE" {
                 registry.register(LemondeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LentaIE" {
