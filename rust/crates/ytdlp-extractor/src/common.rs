@@ -110,12 +110,20 @@ impl ExtractionContext {
     }
 
     pub fn request(&self, request: &Request) -> Result<Response, ExtractorError> {
+        self.request_with_status(request, &[])
+    }
+
+    pub fn request_with_status(
+        &self,
+        request: &Request,
+        accepted_statuses: &[u16],
+    ) -> Result<Response, ExtractorError> {
         let mut request = request.clone();
         if request.cookie_jar().is_none() {
             request.set_cookie_jar(self.cookie_jar.clone());
         }
         let response = self.director.send(&request).map_err(map_request_error)?;
-        if response.status() >= 400 {
+        if response.status() >= 400 && !accepted_statuses.contains(&response.status()) {
             return Err(ExtractorError::new(
                 ExtractorErrorKind::Network,
                 format!(

@@ -115,6 +115,10 @@ impl ExtractorRegistry {
                 registry.register(CcmaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "DemocracynowIE" {
                 registry.register(DemocracynowExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DacastPlaylistIE" {
+                registry.register(DacastPlaylistExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "DacastVODIE" {
+                registry.register(DacastVodExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
