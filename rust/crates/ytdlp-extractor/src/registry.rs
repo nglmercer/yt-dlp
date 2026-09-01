@@ -244,6 +244,8 @@ impl ExtractorRegistry {
                 registry.register(FrontendMastersCourseExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GoToStageIE" {
                 registry.register(GoToStageExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "GBNewsIE" {
+                registry.register(GbNewsExtractor::new(descriptor)?)?;
             } else if descriptor.key == "UplynkIE" {
                 registry.register(UplynkExtractor::new(descriptor)?)?;
             } else if descriptor.key == "UplynkPreplayIE" {

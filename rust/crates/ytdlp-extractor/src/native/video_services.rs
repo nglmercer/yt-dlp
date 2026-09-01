@@ -82,6 +82,7 @@ include!("video_services_parts/fptplay.rs");
 include!("video_services_parts/frontendmasters.rs");
 include!("video_services_parts/francetv.rs");
 include!("video_services_parts/gotostage.rs");
+include!("video_services_parts/gbnews.rs");
 include!("video_services_parts/uplynk.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/eroprofile_album.rs");
