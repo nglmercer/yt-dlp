@@ -165,6 +165,7 @@ self-update behavior.
 - [x] native Democracy Now! page JSON/media extractor
 - [x] native Dacast VOD/playlist API/HLS extractor with encrypted-playback TODO
 - [x] native Daily Mail player/API rendition extractor
+- [x] native CRTVG page metadata/HLS/DASH extractor
 - [x] native AudioBoom embedded clip-store/audio extractor
 - [x] native Bandcamp track JSON/audio extractor
 - [x] native BannedVideo GraphQL metadata/media/comment extractor
