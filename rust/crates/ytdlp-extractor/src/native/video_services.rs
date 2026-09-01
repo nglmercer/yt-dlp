@@ -19,4 +19,5 @@ include!("video_services_parts/harpodeon.rs");
 include!("video_services_parts/btvplus.rs");
 include!("video_services_parts/boxcast.rs");
 include!("video_services_parts/berufetv.rs");
+include!("video_services_parts/canalalpha.rs");
 include!("video_services_parts/fathom.rs");

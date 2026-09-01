@@ -97,6 +97,8 @@ impl ExtractorRegistry {
                 registry.register(BoxCastExtractor::new(descriptor)?)?;
             } else if descriptor.key == "BerufeTVIE" {
                 registry.register(BerufeTvExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "CanalAlphaIE" {
+                registry.register(CanalAlphaExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
