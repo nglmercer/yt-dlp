@@ -132,6 +132,7 @@ include!("video_services_parts/kika.rs");
 include!("video_services_parts/kick.rs");
 include!("video_services_parts/kicker.rs");
 include!("video_services_parts/kickstarter.rs");
+include!("video_services_parts/kompas.rs");
 include!("video_services_parts/kukululive.rs");
 include!("video_services_parts/kaltura.rs");
 include!("video_services_parts/kth.rs");

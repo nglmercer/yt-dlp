@@ -170,6 +170,7 @@ include!("tests_parts/kika.rs");
 include!("tests_parts/kick.rs");
 include!("tests_parts/kicker.rs");
 include!("tests_parts/kickstarter.rs");
+include!("tests_parts/kompas.rs");
 include!("tests_parts/kukululive.rs");
 include!("tests_parts/kaltura.rs");
 include!("tests_parts/kth.rs");

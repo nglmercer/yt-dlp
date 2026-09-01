@@ -390,6 +390,8 @@ impl ExtractorRegistry {
                 registry.register(KikaPlaylistExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KickerIE" {
                 registry.register(KickerExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "KompasVideoIE" {
+                registry.register(KompasVideoExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KickIE" {
                 registry.register(KickExtractor::new(descriptor)?)?;
             } else if descriptor.key == "KickVODIE" {
