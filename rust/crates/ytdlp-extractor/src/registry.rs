@@ -177,6 +177,8 @@ impl ExtractorRegistry {
                 registry.register(EpiconExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EpiconSeriesIE" {
                 registry.register(EpiconSeriesExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "EpornerIE" {
+                registry.register(EpornerExtractor::new(descriptor)?)?;
             } else if descriptor.key == "EroProfileIE" {
                 registry.register(EroProfileExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {

@@ -48,4 +48,5 @@ include!("video_services_parts/euscreen.rs");
 include!("video_services_parts/ertgr.rs");
 include!("video_services_parts/eroprofile.rs");
 include!("video_services_parts/epicon.rs");
+include!("video_services_parts/eporner.rs");
 include!("video_services_parts/fathom.rs");
