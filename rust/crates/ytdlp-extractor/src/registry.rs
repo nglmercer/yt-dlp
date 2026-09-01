@@ -436,6 +436,8 @@ impl ExtractorRegistry {
                 registry.register(MaveChannelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "MBNIE" {
                 registry.register(MbnExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "MuseAIIE" {
+                registry.register(MuseAiExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTStreamIE" {
                 registry.register(LrtStreamExtractor::new(descriptor)?)?;
             } else if descriptor.key == "LRTVODIE" {
