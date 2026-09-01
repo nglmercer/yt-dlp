@@ -99,6 +99,8 @@ impl ExtractorRegistry {
                 registry.register(BerufeTvExtractor::new(descriptor)?)?;
             } else if descriptor.key == "CanalAlphaIE" {
                 registry.register(CanalAlphaExtractor::new(descriptor)?)?;
+            } else if descriptor.key == "CanalsurmasIE" {
+                registry.register(CanalsurmasExtractor::new(descriptor)?)?;
             } else if descriptor.key == "AngelIE" {
                 registry.register(AngelExtractor::new(descriptor)?)?;
             } else if descriptor.key == "NewsyIE" {
