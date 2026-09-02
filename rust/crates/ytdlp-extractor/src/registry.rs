@@ -49,6 +49,8 @@ impl ExtractorRegistry {
                 registry.register(HrefLiRedirectExtractor::new(descriptor)?)?;
             } else if descriptor.key == "GenericIE" {
                 registry.register(GenericExtractor::new(descriptor))?;
+            } else if descriptor.key == "YoutubeIE" {
+                registry.register(YoutubeExtractor::new(descriptor)?)?;
             } else if descriptor.key == "Ku6IE" {
                 registry.register(Ku6Extractor::new(descriptor)?)?;
             } else if descriptor.key == "GraspopIE" {

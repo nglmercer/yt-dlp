@@ -1,6 +1,7 @@
 use super::*;
 
 include!("tests_parts/registry.rs");
+include!("tests_parts/youtube.rs");
 include!("tests_parts/native_a.rs");
 include!("tests_parts/native_b.rs");
 include!("tests_parts/native_c.rs");
