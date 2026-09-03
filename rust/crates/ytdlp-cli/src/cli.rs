@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use std::path::{Path, PathBuf};
+use yt_dlp_extractor::ExtractorArgs;
 use yt_dlp_networking::{Request, SharedCookieJar};
 
 include!("cli_parts/model.rs");

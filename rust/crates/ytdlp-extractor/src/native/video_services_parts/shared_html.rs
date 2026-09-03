@@ -80,10 +80,10 @@ fn html_meta_value(html: &str, key: &str) -> Option<String> {
     let key = regex::escape(key);
     let patterns = [
         format!(
-            r#"(?is)<meta\b[^>]*(?:property|name)\s*=\s*["']{key}["'][^>]*content\s*=\s*["']([^"']*)"#,
+            r#"(?is)<meta\b[^>]*(?:property|name|itemprop)\s*=\s*["']{key}["'][^>]*content\s*=\s*["']([^"']*)"#,
         ),
         format!(
-            r#"(?is)<meta\b[^>]*content\s*=\s*["']([^"']*)["'][^>]*(?:property|name)\s*=\s*["']{key}["']"#,
+            r#"(?is)<meta\b[^>]*content\s*=\s*["']([^"']*)["'][^>]*(?:property|name|itemprop)\s*=\s*["']{key}["']"#,
         ),
     ];
     patterns.iter().find_map(|pattern| {

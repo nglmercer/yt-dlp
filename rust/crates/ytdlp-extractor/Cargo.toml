@@ -13,4 +13,5 @@ serde.workspace = true
 serde_json.workspace = true
 url.workspace = true
 yt-dlp-core = { path = "../ytdlp-core" }
+yt-dlp-javascript = { path = "../ytdlp-javascript" }
 yt-dlp-networking = { path = "../ytdlp-networking" }

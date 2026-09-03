@@ -1,4 +1,5 @@
 use fancy_regex::Regex;
+use std::collections::HashMap;
 use yt_dlp_core::InfoDict;
 use yt_dlp_networking::{
     CookieJar, Request, RequestDirector, RequestError, Response, SharedCookieJar,
@@ -85,12 +86,108 @@ impl ExtractorResult {
     }
 }
 
+/// Per-extractor configuration arguments (`--extractor-args IE_KEY:ARGS`).
+/// Mirrors the `extractor_args` downloader param: the outer key is the
+/// lowercased IE key, inner keys are normalized (`strip().lower().replace('-',
+/// '_')` at parse time), and every value is the list of comma-separated
+/// entries for that key.
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize)]
+pub struct ExtractorArgs {
+    ie_args: HashMap<String, HashMap<String, Vec<String>>>,
+}
+
+impl ExtractorArgs {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Parse one `--extractor-args IE_KEY:ARGS` value into its IE key and
+    /// argument map, mirroring `_dict_from_options_callback` with
+    /// `multiple_keys=False` plus the extractor-arg `process` step. Later
+    /// pairs win on repeat keys, and repeating the flag replaces the whole
+    /// per-IE map (handled by [`Self::insert_ie_args`]).
+    pub fn parse_cli_value(value: &str) -> Result<(String, HashMap<String, Vec<String>>), String> {
+        let (ie_key, args) = value.split_once(':').ok_or_else(|| {
+            format!("wrong --extractor-args formatting; it should be IE_KEY:ARGS, not \"{value}\"")
+        })?;
+        if ie_key.is_empty()
+            || !ie_key.chars().all(|character| {
+                character.is_alphanumeric() || character == '_' || character == '-'
+            })
+        {
+            return Err(format!(
+                "wrong --extractor-args formatting; it should be IE_KEY:ARGS, not \"{value}\""
+            ));
+        }
+        let mut parsed = HashMap::new();
+        for entry in args.split(';') {
+            let (key, values) = match entry.split_once('=') {
+                Some((key, values)) => (key, values),
+                None => (entry, ""),
+            };
+            let key = key.trim().to_ascii_lowercase().replace('-', "_");
+            parsed.insert(key, split_extractor_arg_values(values));
+        }
+        Ok((ie_key.to_ascii_lowercase(), parsed))
+    }
+
+    /// Store one parsed flag value, replacing any previous map for the IE.
+    pub fn insert_ie_args(&mut self, ie_key: String, args: HashMap<String, Vec<String>>) {
+        self.ie_args.insert(ie_key, args);
+    }
+
+    /// Mirror `InfoExtractor._configuration_arg`: look up `key` under the
+    /// lowercased `ie_key` (the key itself is matched exactly, as stored).
+    /// Missing keys yield an empty list; with `casesense` false the values
+    /// are lowercased.
+    pub fn configuration_arg(&self, ie_key: &str, key: &str, casesense: bool) -> Vec<String> {
+        let values = self
+            .ie_args
+            .get(&ie_key.to_ascii_lowercase())
+            .and_then(|args| args.get(key))
+            .cloned()
+            .unwrap_or_default();
+        if casesense {
+            values
+        } else {
+            values
+                .iter()
+                .map(|value| value.to_ascii_lowercase())
+                .collect()
+        }
+    }
+}
+
+/// Split one extractor-arg value on commas that are not backslash-escaped,
+/// unescape `\,` to `,`, and strip whitespace, mirroring the
+/// `--extractor-args` value processing in `yt_dlp/options.py`.
+fn split_extractor_arg_values(values: &str) -> Vec<String> {
+    let mut items = Vec::new();
+    let mut current = String::new();
+    let mut previous = '\0';
+    for character in values.chars() {
+        if character == ',' && previous != '\\' {
+            items.push(std::mem::take(&mut current));
+        } else {
+            current.push(character);
+        }
+        previous = character;
+    }
+    items.push(current);
+    items
+        .into_iter()
+        .map(|item| item.replace(r"\,", ","))
+        .map(|item| item.trim().to_owned())
+        .collect()
+}
+
 /// Shared native request context for extractors that need to fetch metadata or
 /// manifests. It owns no Python state and all response errors are surfaced as
 /// native extractor errors.
 pub struct ExtractionContext {
     director: RequestDirector,
     cookie_jar: SharedCookieJar,
+    extractor_args: ExtractorArgs,
 }
 
 impl ExtractionContext {
@@ -98,7 +195,13 @@ impl ExtractionContext {
         Self {
             director,
             cookie_jar,
+            extractor_args: ExtractorArgs::new(),
         }
+    }
+
+    pub fn with_extractor_args(mut self, extractor_args: ExtractorArgs) -> Self {
+        self.extractor_args = extractor_args;
+        self
     }
 
     pub fn native() -> Self {
@@ -107,6 +210,11 @@ impl ExtractionContext {
 
     pub fn cookie_jar(&self) -> &SharedCookieJar {
         &self.cookie_jar
+    }
+
+    pub fn configuration_arg(&self, ie_key: &str, key: &str, casesense: bool) -> Vec<String> {
+        self.extractor_args
+            .configuration_arg(ie_key, key, casesense)
     }
 
     pub fn request(&self, request: &Request) -> Result<Response, ExtractorError> {

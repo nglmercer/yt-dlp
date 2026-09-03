@@ -119,6 +119,9 @@ pub struct RuntimeOptions {
     pub no_check_certificate: bool,
     pub jitless: bool,
     pub environment: BTreeMap<String, String>,
+    /// Extra flags inserted before the script/stdin argument, e.g. Node
+    /// permission flags for the challenge-solver invocation.
+    pub extra_args: Vec<String>,
 }
 
 impl Default for RuntimeOptions {
@@ -128,6 +131,7 @@ impl Default for RuntimeOptions {
             no_check_certificate: false,
             jitless: false,
             environment: BTreeMap::new(),
+            extra_args: Vec::new(),
         }
     }
 }

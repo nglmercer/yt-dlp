@@ -93,6 +93,12 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                         .headers
                         .insert(name.to_ascii_lowercase(), value.to_owned());
                 }
+                "--extractor-args" => {
+                    let value = option_value(args, &mut index, option, inline_value)?;
+                    let (ie_key, ie_args) =
+                        ExtractorArgs::parse_cli_value(&value).map_err(CliError::new)?;
+                    options.extractor_args.insert_ie_args(ie_key, ie_args);
+                }
                 "--quiet" => options.quiet = Some(true),
                 "--no-quiet" => options.quiet = Some(false),
                 "--verbose" => options.verbose = true,
@@ -111,6 +117,8 @@ fn parse_args_inner(args: &[String]) -> Result<ParseResult, CliError> {
                     options.format = Some(option_value(args, &mut index, option, inline_value)?);
                 }
                 "--all-formats" => options.format = Some("all".to_owned()),
+                "--allow-unplayable-formats" => options.allow_unplayable_formats = true,
+                "--no-allow-unplayable-formats" => options.allow_unplayable_formats = false,
                 "--format-sort" => add_csv(
                     &mut options.format_sort,
                     &option_value(args, &mut index, option, inline_value)?,

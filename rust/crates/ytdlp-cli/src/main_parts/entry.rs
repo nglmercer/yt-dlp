@@ -82,12 +82,70 @@ mod native_tests {
         info.insert(
             "formats",
             serde_json::json!([
-                {"format_id": "ogg", "ext": "ogg", "vcodec": "none", "url": "https://media.test/a.ogg"},
-                {"format_id": "mp3", "ext": "mp3", "vcodec": "none", "url": "https://media.test/a.mp3"},
-                {"format_id": "video", "ext": "mp4", "url": "https://media.test/a.mp4"}
+                {"format_id": "ogg", "ext": "ogg", "vcodec": "none", "acodec": "vorbis", "url": "https://media.test/a.ogg"},
+                {"format_id": "mp3", "ext": "mp3", "vcodec": "none", "acodec": "mp3", "url": "https://media.test/a.mp3"},
+                {"format_id": "video", "ext": "mp4", "vcodec": "vp9", "acodec": "none", "url": "https://media.test/a.mp4"}
             ]),
         );
         info
+    }
+
+    /// A YouTube-shaped adaptive fixture in scrambled extractor order. The
+    /// expectations below were verified against the Python oracle.
+    fn mixed_format_info() -> InfoDict {
+        let mut info = InfoDict::new();
+        info.insert("id", serde_json::json!("clip"));
+        info.insert("title", serde_json::json!("Clip"));
+        info.insert("ext", serde_json::json!("mp4"));
+        info.insert(
+            "formats",
+            serde_json::json!([
+                {"format_id": "18", "url": "https://cdn.example/18.mp4", "ext": "mp4", "vcodec": "avc1.42001E", "acodec": "mp4a.40.2", "height": 360, "width": 640, "tbr": 500},
+                {"format_id": "137", "url": "https://cdn.example/137.mp4", "ext": "mp4", "vcodec": "avc1.640028", "acodec": "none", "height": 1080, "width": 1920, "tbr": 4000, "filesize": 100000000},
+                {"format_id": "140", "url": "https://cdn.example/140.m4a", "ext": "m4a", "vcodec": "none", "acodec": "mp4a.40.2", "abr": 128, "tbr": 128},
+                {"format_id": "22", "url": "https://cdn.example/22.mp4", "ext": "mp4", "vcodec": "avc1.64001F", "acodec": "mp4a.40.2", "height": 720, "width": 1280, "tbr": 2000},
+                {"format_id": "247", "url": "https://cdn.example/247.webm", "ext": "webm", "vcodec": "vp9", "acodec": "none", "height": 720, "width": 1280, "tbr": 1500},
+                {"format_id": "251", "url": "https://cdn.example/251.webm", "ext": "webm", "vcodec": "none", "acodec": "opus", "abr": 160, "tbr": 160}
+            ]),
+        );
+        info
+    }
+
+    fn selected_ids(selections: Vec<NativeSelection>) -> Vec<String> {
+        selections
+            .into_iter()
+            .map(|selection| match selection {
+                NativeSelection::Single(format) => format
+                    .get("format_id")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("?")
+                    .to_owned(),
+                NativeSelection::Merged(merged) => format!(
+                    "merge:{}:{}",
+                    merged
+                        .get("requested_formats")
+                        .and_then(serde_json::Value::as_array)
+                        .map(|parts| {
+                            parts
+                                .iter()
+                                .filter_map(|part| {
+                                    part.get("format_id").and_then(serde_json::Value::as_str)
+                                })
+                                .collect::<Vec<_>>()
+                                .join("+")
+                        })
+                        .unwrap_or_default(),
+                    merged
+                        .get("ext")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("?"),
+                ),
+            })
+            .collect()
+    }
+
+    fn select_ids(info: &InfoDict, selector: Option<&str>) -> Vec<String> {
+        selected_ids(select_native_downloads(info, selector, &cli::CliOptions::default()).unwrap())
     }
 
     #[test]
@@ -108,10 +166,143 @@ mod native_tests {
     }
 
     #[test]
-    fn complex_native_format_selection_is_explicitly_todo() {
-        let error =
-            select_download_format(&sample_info(), Some("bestvideo+bestaudio")).unwrap_err();
-        assert!(error.starts_with("TODO:"));
+    fn native_format_selection_merges_video_and_audio() {
+        // Oracle: vp9/mp4 video plus vorbis/ogg audio merges into mkv.
+        let selections = select_native_downloads(
+            &sample_info(),
+            Some("bestvideo+bestaudio"),
+            &cli::CliOptions::default(),
+        )
+        .unwrap();
+        assert_eq!(selected_ids(selections), vec!["merge:video+ogg:mkv"]);
+    }
+
+    #[test]
+    fn native_format_sorting_matches_oracle_order() {
+        let mut formats = mixed_format_info()
+            .get("formats")
+            .and_then(serde_json::Value::as_array)
+            .cloned()
+            .unwrap();
+        sort_native_formats(&mut formats, &[], &[]);
+        let ids = formats
+            .iter()
+            .filter_map(|format| format.get("format_id").and_then(serde_json::Value::as_str))
+            .collect::<Vec<_>>();
+        // Oracle worst-first order.
+        assert_eq!(ids, vec!["140", "251", "18", "22", "247", "137"]);
+    }
+
+    #[test]
+    fn native_format_atoms_match_oracle_picks() {
+        let info = mixed_format_info();
+        // `best` is the best progressive format, not the video-only one.
+        assert_eq!(select_ids(&info, Some("best")), vec!["22"]);
+        assert_eq!(select_ids(&info, Some("worst")), vec!["18"]);
+        assert_eq!(select_ids(&info, Some("best.2")), vec!["18"]);
+        assert_eq!(select_ids(&info, Some("bv")), vec!["137"]);
+        assert_eq!(select_ids(&info, Some("bv*")), vec!["137"]);
+        assert_eq!(select_ids(&info, Some("ba")), vec!["251"]);
+        // `ba*` accepts any format carrying audio, including progressive.
+        assert_eq!(select_ids(&info, Some("ba*")), vec!["22"]);
+        assert_eq!(select_ids(&info, Some("22")), vec!["22"]);
+        assert_eq!(
+            select_ids(&info, Some("all")),
+            vec!["137", "247", "22", "18", "251", "140"]
+        );
+        // No mp3 container exists, so selection is empty.
+        assert!(select_ids(&info, Some("mp3")).is_empty());
+    }
+
+    #[test]
+    fn native_format_merges_match_oracle() {
+        let info = mixed_format_info();
+        // Oracle: incompatible mp4/avc + webm/opus parts merge into mkv.
+        assert_eq!(select_ids(&info, Some("bv*+ba")), vec!["merge:137+251:mkv"]);
+        assert_eq!(
+            select_ids(&info, Some("bv+ba/b")),
+            vec!["merge:137+251:mkv"]
+        );
+        // A video-only 720p ceiling plus the best audio merges into webm.
+        assert_eq!(
+            select_ids(&info, Some("bv[height<=720]+ba/b")),
+            vec!["merge:247+251:webm"]
+        );
+        // Without any audio-only stream the merge is empty and `/b`
+        // falls back to the best progressive format.
+        let mut video_only = mixed_format_info();
+        video_only.insert(
+            "formats",
+            serde_json::json!([
+                {"format_id": "137", "url": "https://cdn.example/137.mp4", "ext": "mp4", "vcodec": "avc1.640028", "acodec": "none", "height": 1080},
+                {"format_id": "22", "url": "https://cdn.example/22.mp4", "ext": "mp4", "vcodec": "avc1.64001F", "acodec": "mp4a.40.2", "height": 720}
+            ]),
+        );
+        assert_eq!(select_ids(&video_only, Some("bv+ba/b")), vec!["22"]);
+    }
+
+    #[test]
+    fn native_format_filters_match_oracle() {
+        let info = mixed_format_info();
+        assert_eq!(select_ids(&info, Some("[height<=720]")), vec!["22"]);
+        assert_eq!(select_ids(&info, Some("bv[height<=720]")), vec!["247"]);
+        assert_eq!(select_ids(&info, Some("ba[acodec=opus]")), vec!["251"]);
+        assert_eq!(select_ids(&info, Some("b[ext^=web]")), Vec::<String>::new());
+        assert_eq!(select_ids(&info, Some("[tbr>1000]")), vec!["22"]);
+    }
+
+    #[test]
+    fn native_format_sort_keys_match_oracle() {
+        let info = mixed_format_info();
+        let mut options = cli::CliOptions::default();
+        options.format_sort = vec!["vcodec:vp9".to_owned()];
+        let mut formats = info
+            .get("formats")
+            .and_then(serde_json::Value::as_array)
+            .cloned()
+            .unwrap();
+        sort_native_formats(&mut formats, &options.format_sort, &[]);
+        let ids = formats
+            .iter()
+            .filter_map(|format| format.get("format_id").and_then(serde_json::Value::as_str))
+            .collect::<Vec<_>>();
+        assert_eq!(ids, vec!["140", "251", "18", "22", "137", "247"]);
+
+        options.format_sort = vec!["res:720".to_owned()];
+        let mut formats = info
+            .get("formats")
+            .and_then(serde_json::Value::as_array)
+            .cloned()
+            .unwrap();
+        sort_native_formats(&mut formats, &options.format_sort, &[]);
+        let ids = formats
+            .iter()
+            .filter_map(|format| format.get("format_id").and_then(serde_json::Value::as_str))
+            .collect::<Vec<_>>();
+        assert_eq!(ids, vec!["140", "251", "137", "18", "22", "247"]);
+    }
+
+    #[test]
+    fn native_format_selector_rejects_invalid_syntax() {
+        for spec in ["bv+", ",bv", "(bv", "bv[height<]"] {
+            assert!(
+                select_native_downloads(
+                    &mixed_format_info(),
+                    Some(spec),
+                    &cli::CliOptions::default()
+                )
+                .is_err(),
+                "{spec} should fail"
+            );
+        }
+    }
+
+    #[test]
+    fn native_default_format_prefers_merge_when_ffmpeg_configured() {
+        let mut options = cli::CliOptions::default();
+        options.ffmpeg_location = Some("/usr/bin".to_owned());
+        let selections = select_native_downloads(&mixed_format_info(), None, &options).unwrap();
+        assert_eq!(selected_ids(selections), vec!["merge:137+251:mkv"]);
     }
 
     #[test]

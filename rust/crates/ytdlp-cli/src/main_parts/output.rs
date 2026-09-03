@@ -18,6 +18,16 @@ fn print_info_json(info: &InfoDict) -> Result<(), String> {
     Ok(())
 }
 
+/// The trailing DRM marker for one `--list-formats` row, mirroring the
+/// `MORE INFO` badges in `list_formats`.
+pub(crate) fn format_drm_marker(state: FormatDrmState) -> &'static str {
+    match state {
+        FormatDrmState::Blocked => "\tDRM",
+        FormatDrmState::Maybe => "\tMaybe DRM",
+        FormatDrmState::Free => "",
+    }
+}
+
 fn print_formats(info: &InfoDict) {
     if let Some(formats) = info.get("formats").and_then(serde_json::Value::as_array) {
         for format in formats {
@@ -33,7 +43,8 @@ fn print_formats(info: &InfoDict) {
                 .get("url")
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or("<missing URL>");
-            println!("{format_id}\t{ext}\t{url}");
+            let drm = format_drm_marker(format_drm_state(format));
+            println!("{format_id}\t{ext}\t{url}{drm}");
         }
     } else if let Some(url) = info.get_str("url") {
         println!(
@@ -77,4 +88,16 @@ fn write_info_json(info: &InfoDict, output: &PathBuf) -> Result<PathBuf, String>
     std::fs::write(&info_path, bytes)
         .map_err(|error| format!("could not write info JSON {info_path:?}: {error}"))?;
     Ok(info_path)
+}
+
+#[cfg(test)]
+mod drm_marker_tests {
+    use super::*;
+
+    #[test]
+    fn drm_marker_matches_table_badges() {
+        assert_eq!(format_drm_marker(FormatDrmState::Blocked), "\tDRM");
+        assert_eq!(format_drm_marker(FormatDrmState::Maybe), "\tMaybe DRM");
+        assert_eq!(format_drm_marker(FormatDrmState::Free), "");
+    }
 }

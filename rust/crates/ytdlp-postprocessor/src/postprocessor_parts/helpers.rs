@@ -9,6 +9,19 @@ fn resolve_ffmpeg(location: Option<&Path>) -> PathBuf {
     }
 }
 
+/// Resolve the companion `ffprobe` executable, mirroring the probe half of
+/// `--ffmpeg-location`: no location resolves `ffprobe` from `PATH`,
+/// directories resolve both tools, and an explicit ffmpeg file leaves the
+/// probe unresolved (callers then fall back to `ffmpeg -i`, exactly like
+/// `probe_available == False` in Python).
+fn resolve_ffprobe(location: Option<&Path>) -> Option<PathBuf> {
+    match location {
+        None => Some(PathBuf::from("ffprobe")),
+        Some(dir) if dir.is_dir() => Some(dir.join("ffprobe")),
+        Some(_) => None,
+    }
+}
+
 fn ffmpeg_file_argument(path: &Path) -> String {
     let value = path.to_string_lossy();
     if value == "-" || value.starts_with("http://") || value.starts_with("https://") {

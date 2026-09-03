@@ -17,6 +17,7 @@ use yt_dlp_core::InfoDict;
 
 include!("postprocessor_parts/contracts.rs");
 include!("postprocessor_parts/command.rs");
+include!("postprocessor_parts/merge.rs");
 include!("postprocessor_parts/remux.rs");
 include!("postprocessor_parts/audio.rs");
 include!("postprocessor_parts/convert.rs");

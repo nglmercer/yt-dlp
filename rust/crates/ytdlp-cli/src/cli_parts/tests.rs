@@ -43,6 +43,25 @@ mod tests {
     }
 
     #[test]
+    fn parses_allow_unplayable_formats_with_negation() {
+        let parsed = parse_args(&args(&["--allow-unplayable-formats"])).unwrap();
+        let ParseResult::Options(options) = parsed else {
+            panic!("expected options")
+        };
+        assert!(options.allow_unplayable_formats);
+
+        let parsed = parse_args(&args(&[
+            "--allow-unplayable-formats",
+            "--no-allow-unplayable-formats",
+        ]))
+        .unwrap();
+        let ParseResult::Options(options) = parsed else {
+            panic!("expected options")
+        };
+        assert!(!options.allow_unplayable_formats);
+    }
+
+    #[test]
     fn parses_aliases_and_option_terminator() {
         let parsed = parse_args(&args(&[
             "--no-playlist",
@@ -169,6 +188,70 @@ mod tests {
         assert_eq!(
             request.extensions().get("verify"),
             Some(&serde_json::json!(false))
+        );
+    }
+
+    #[test]
+    fn parses_extractor_args_and_replaces_per_extractor() {
+        let parsed = parse_args(&args(&[
+            "--extractor-args",
+            "youtube:po_token=web.player+QUJD;fetch_pot=always",
+            "--extractor-args=generic:foo=bar",
+            "https://example.test/",
+        ]))
+        .unwrap();
+        let ParseResult::Options(options) = parsed else {
+            panic!("expected options")
+        };
+        assert_eq!(
+            options
+                .extractor_args
+                .configuration_arg("Youtube", "po_token", true),
+            vec!["web.player+QUJD".to_owned()]
+        );
+        assert_eq!(
+            options
+                .extractor_args
+                .configuration_arg("youtube", "fetch_pot", false),
+            vec!["always".to_owned()]
+        );
+        assert_eq!(
+            options
+                .extractor_args
+                .configuration_arg("generic", "foo", true),
+            vec!["bar".to_owned()]
+        );
+
+        // Repeating the flag for an IE replaces its whole map.
+        let parsed = parse_args(&args(&[
+            "--extractor-args",
+            "youtube:po_token=AAA",
+            "--extractor-args",
+            "youtube:fetch_pot=never",
+            "https://example.test/",
+        ]))
+        .unwrap();
+        let ParseResult::Options(options) = parsed else {
+            panic!("expected options")
+        };
+        assert!(options
+            .extractor_args
+            .configuration_arg("youtube", "po_token", true)
+            .is_empty());
+        assert_eq!(
+            options
+                .extractor_args
+                .configuration_arg("youtube", "fetch_pot", true),
+            vec!["never".to_owned()]
+        );
+    }
+
+    #[test]
+    fn rejects_malformed_extractor_args() {
+        let error = parse_args(&args(&["--extractor-args", "youtube"])).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "wrong --extractor-args formatting; it should be IE_KEY:ARGS, not \"youtube\""
         );
     }
 }

@@ -55,7 +55,24 @@ impl JavascriptRuntime {
     }
 
     pub fn invocation(&self, options: &RuntimeOptions) -> RuntimeInvocation {
-        let mut args = match self.info.kind {
+        let mut args = self.base_invocation(options);
+        // Extra flags go before the final stdin/script argument.
+        if !options.extra_args.is_empty() {
+            if let Some(tail) = args.pop() {
+                args.extend(options.extra_args.iter().cloned());
+                args.push(tail);
+            } else {
+                args.extend(options.extra_args.iter().cloned());
+            }
+        }
+        RuntimeInvocation {
+            program: self.info.path.clone(),
+            args: std::mem::take(&mut args),
+        }
+    }
+
+    fn base_invocation(&self, options: &RuntimeOptions) -> Vec<String> {
+        match self.info.kind {
             RuntimeKind::Deno => {
                 let mut args = vec![
                     "run".to_owned(),
@@ -105,10 +122,6 @@ impl JavascriptRuntime {
                 args
             }
             RuntimeKind::QuickJs => vec!["--script".to_owned(), String::new()],
-        };
-        RuntimeInvocation {
-            program: self.info.path.clone(),
-            args: std::mem::take(&mut args),
         }
     }
 

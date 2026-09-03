@@ -14,12 +14,13 @@ use yt_dlp_extractor::{ExtractionContext, ExtractorRegistry, ExtractorResult};
 use yt_dlp_javascript::{JavascriptRuntime, RuntimeKind};
 use yt_dlp_networking::{CookieJar, Request, RequestDirector, Response};
 use yt_dlp_postprocessor::{
-    FfmpegExtractAudio, FfmpegRemuxer, FfmpegVideoConvertor, PostProcessOptions, PostProcessResult,
-    PostProcessor,
+    FfmpegExtractAudio, FfmpegMerger, FfmpegRemuxer, FfmpegVideoConvertor, PostProcessOptions,
+    PostProcessResult, PostProcessor,
 };
 
 include!("main_parts/parity.rs");
 include!("main_parts/request.rs");
+include!("main_parts/sort.rs");
 include!("main_parts/formats.rs");
 include!("main_parts/postprocess.rs");
 include!("main_parts/output.rs");

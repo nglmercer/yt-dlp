@@ -11,7 +11,7 @@ mod registry;
 mod tests;
 
 pub use common::{
-    DescriptorExtractor, ExtractionContext, ExtractorDescriptor, ExtractorError,
+    DescriptorExtractor, ExtractionContext, ExtractorArgs, ExtractorDescriptor, ExtractorError,
     ExtractorErrorKind, ExtractorResult, InfoExtractor,
 };
 pub use native::*;

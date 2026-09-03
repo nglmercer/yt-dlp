@@ -3,9 +3,19 @@ fn native_download_argument(args: &[String]) -> Result<(), String> {
     let ParseResult::Options(options) = result else {
         return parse_options_result(result);
     };
+    // Mirrors the `allow_unplayable_formats` constructor warning: exact
+    // message body, Rust `[warning]` prefix per local convention.
+    if options.allow_unplayable_formats {
+        eprintln!(
+            "[warning] You have asked for UNPLAYABLE formats to be listed/downloaded. \
+             This is a developer option intended for debugging.\n         \
+             If you experience any issues while using this option, DO NOT open a bug report"
+        );
+    }
     let urls = native_input_urls(&options)?;
     let registry = ExtractorRegistry::generated().map_err(|error| error.to_string())?;
-    let extraction_context = ExtractionContext::native();
+    let extraction_context =
+        ExtractionContext::native().with_extractor_args(options.extractor_args.clone());
     let cookie_path = options.cookiefile.as_deref().map(PathBuf::from);
     if let Some(path) = cookie_path.as_deref() {
         extraction_context
@@ -238,6 +248,25 @@ fn native_merge_playlist_entry_metadata(source: &InfoDict, mut resolved: InfoDic
     resolved
 }
 
+/// Print the interactive format prompt without a trailing newline, mirroring
+/// the `to_screen(..., skip_eol=True)` prompt in `process_video_result`.
+fn print_format_prompt() {
+    print!("\nEnter format selector (Press ENTER for default, or Ctrl+C to quit): ");
+    let _ = std::io::Write::flush(&mut std::io::stdout());
+}
+
+/// Read one interactive reply line. `Ok(0)` (EOF) and read errors yield
+/// `None`, which aborts selection cleanly; only the `\n` terminator is
+/// stripped, mirroring `input()`.
+fn read_format_reply() -> Option<String> {
+    let mut line = String::new();
+    match std::io::BufRead::read_line(&mut std::io::stdin().lock(), &mut line) {
+        Ok(0) => None,
+        Ok(_) => Some(line.strip_suffix('\n').unwrap_or(&line).to_owned()),
+        Err(_) => None,
+    }
+}
+
 fn native_download_info(
     options: &cli::CliOptions,
     info: &InfoDict,
@@ -249,64 +278,19 @@ fn native_download_info(
         return print_info_json(&info);
     }
     if options.listformats == Some(true) {
-        print_formats(&info);
+        print_sorted_formats(info, options);
         return Ok(());
     }
-    let selector = options
-        .format
-        .as_deref()
-        .or(options.extractaudio.then_some("bestaudio"));
-    let selected = select_download_format_details(&info, selector)?;
-    let download_url = selected.url;
-    let selected_ext = selected.ext;
-    let mut request = options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
-    native_apply_info_http_headers(&mut request, info)?;
-    if let Some(extra_param) = selected.extra_param_to_segment_url {
-        request.extensions_mut().insert(
-            "extra_param_to_segment_url".to_owned(),
-            serde_json::json!(extra_param),
-        );
-    }
-    let output = direct_output_path(info, options, selected_ext.as_deref())?;
-    let requested_fields = print_requested_fields(info, options, &download_url);
-    let info_path = if options.writeinfojson == Some(true) {
-        Some(write_info_json(info, &output)?)
+    // Mirrors `process_video_result`: `-f -` lists the table, then prompts
+    // until a reply selects something.
+    let selections = if options.format.as_deref() == Some("-") {
+        print_sorted_formats(info, options);
+        select_interactive_downloads(info, options, &print_format_prompt, &mut read_format_reply)?
     } else {
-        None
+        select_native_downloads(info, options.format.as_deref(), options)?
     };
-    if requested_fields || options.skip_download {
-        if let Some(info_path) = info_path.as_ref() {
-            eprintln!("[info] {}", info_path.display());
-        }
-        return Ok(());
-    }
-    let declared_ext = selected_ext
-        .as_deref()
-        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str));
-    let declared_protocol = info
-        .get("protocol")
-        .and_then(serde_json::Value::as_str)
-        .or_else(|| {
-            format_records(info).into_iter().find_map(|format| {
-                (format.get("url").and_then(serde_json::Value::as_str)
-                    == Some(download_url.as_str()))
-                .then(|| format.get("protocol").and_then(serde_json::Value::as_str))
-                .flatten()
-            })
-        });
-    if let Some(todo) = native_protocol_todo(&download_url, declared_ext, declared_protocol) {
-        return Err(todo);
-    }
-    if archive.contains_info(info, fallback_extractor) {
-        if !options.quiet.unwrap_or(false) {
-            eprintln!(
-                "[download] {} is already present in the download archive",
-                archive
-                    .id_for_info(info, fallback_extractor)
-                    .unwrap_or_else(|| "item".to_owned())
-            );
-        }
-        return Ok(());
+    if selections.is_empty() {
+        return Err("Requested format is not available".to_owned());
     }
     let download_options = DownloadOptions {
         simulate: options.simulate == Some(true),
@@ -328,24 +312,222 @@ fn native_download_info(
             .unwrap_or(1),
     };
     let downloader = DirectDownloader::native();
+    // Requested-fields and info-JSON pass, like one `process_info` per
+    // selected format in the oracle.
+    let mut requested_fields = false;
+    let mut info_paths = Vec::new();
+    for selection in &selections {
+        let (view, primary_url) = selection_info_view(info, selection);
+        requested_fields |= print_requested_fields(&view, options, &primary_url);
+        if options.writeinfojson == Some(true) {
+            let output = selection_output_path(options, info, selection)?;
+            info_paths.push(write_info_json(&view, &output)?);
+        }
+    }
+    if requested_fields || options.skip_download {
+        for info_path in &info_paths {
+            eprintln!("[info] {}", info_path.display());
+        }
+        return Ok(());
+    }
+    for selection in &selections {
+        match selection {
+            NativeSelection::Single(format) => native_download_single_format(
+                options,
+                info,
+                format,
+                extraction_context,
+                archive,
+                fallback_extractor,
+                &download_options,
+                &downloader,
+            )?,
+            NativeSelection::Merged(merged) => native_download_merged_format(
+                options,
+                info,
+                merged,
+                extraction_context,
+                archive,
+                fallback_extractor,
+                &download_options,
+                &downloader,
+            )?,
+        }
+    }
+    for info_path in &info_paths {
+        eprintln!("[info] {}", info_path.display());
+    }
+    Ok(())
+}
+
+/// The info view and primary URL used for requested-fields printing and
+/// info-JSON output of one selection.
+fn selection_info_view(info: &InfoDict, selection: &NativeSelection) -> (InfoDict, String) {
+    match selection {
+        NativeSelection::Single(format) => (
+            info.clone(),
+            format
+                .get("url")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
+        ),
+        NativeSelection::Merged(merged) => {
+            let mut view = info.clone();
+            if let Some(fields) = merged.as_object() {
+                for (key, value) in fields {
+                    view.insert(key, value.clone());
+                }
+            }
+            let primary_url = merged
+                .get("requested_formats")
+                .and_then(serde_json::Value::as_array)
+                .and_then(|parts| parts.first())
+                .and_then(|part| part.get("url"))
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or("")
+                .to_owned();
+            (view, primary_url)
+        }
+    }
+}
+
+fn selection_output_path(
+    options: &cli::CliOptions,
+    info: &InfoDict,
+    selection: &NativeSelection,
+) -> Result<PathBuf, String> {
+    match selection {
+        NativeSelection::Single(format) => {
+            let ext = format
+                .get("ext")
+                .and_then(serde_json::Value::as_str)
+                .or_else(|| info.get("ext").and_then(serde_json::Value::as_str));
+            direct_output_path(info, options, ext)
+        }
+        NativeSelection::Merged(merged) => {
+            let mut view = info.clone();
+            if let Some(fields) = merged.as_object() {
+                for (key, value) in fields {
+                    view.insert(key, value.clone());
+                }
+            }
+            let ext = merged.get("ext").and_then(serde_json::Value::as_str);
+            direct_output_path(&view, options, ext)
+        }
+    }
+}
+
+/// The protocol used to dispatch one format: its own declaration, the info
+/// declaration, or the matching info format, like the oracle's per-format
+/// downloader choice.
+fn native_format_protocol(
+    info: &InfoDict,
+    format: &serde_json::Value,
+    download_url: &str,
+) -> Option<String> {
+    format
+        .get("protocol")
+        .and_then(serde_json::Value::as_str)
+        .or_else(|| info.get("protocol").and_then(serde_json::Value::as_str))
+        .or_else(|| {
+            format_records(info).into_iter().find_map(|record| {
+                (record.get("url").and_then(serde_json::Value::as_str) == Some(download_url))
+                    .then(|| record.get("protocol").and_then(serde_json::Value::as_str))
+                    .flatten()
+            })
+        })
+        .map(str::to_owned)
+}
+
+fn native_dispatch_download(
+    downloader: &DirectDownloader,
+    request: &Request,
+    download_url: &str,
+    declared_ext: Option<&str>,
+    declared_protocol: Option<&str>,
+    output: &std::path::Path,
+    download_options: &DownloadOptions,
+) -> Result<DownloadResult, String> {
+    if let Some(todo) =
+        native_protocol_todo(download_url, declared_ext, declared_protocol.as_deref())
+    {
+        return Err(todo);
+    }
     let result = match declared_ext {
-        Some("m3u8") => downloader.download_hls(&request, Some(&output), &download_options),
-        Some("mpd") => downloader.download_dash(&request, Some(&output), &download_options),
-        _ if declared_protocol.is_some_and(native_hls_protocol) => {
-            downloader.download_hls(&request, Some(&output), &download_options)
+        Some("m3u8") => downloader.download_hls(request, Some(output), download_options),
+        Some("mpd") => downloader.download_dash(request, Some(output), download_options),
+        _ if declared_protocol
+            .as_deref()
+            .is_some_and(native_hls_protocol) =>
+        {
+            downloader.download_hls(request, Some(output), download_options)
         }
-        _ if declared_protocol.is_some_and(native_dash_protocol) => {
-            downloader.download_dash(&request, Some(&output), &download_options)
+        _ if declared_protocol
+            .as_deref()
+            .is_some_and(native_dash_protocol) =>
+        {
+            downloader.download_dash(request, Some(output), download_options)
         }
-        _ if native_url_ends_with(&download_url, ".m3u8") => {
-            downloader.download_hls(&request, Some(&output), &download_options)
+        _ if native_url_ends_with(download_url, ".m3u8") => {
+            downloader.download_hls(request, Some(output), download_options)
         }
-        _ if native_url_ends_with(&download_url, ".mpd") => {
-            downloader.download_dash(&request, Some(&output), &download_options)
+        _ if native_url_ends_with(download_url, ".mpd") => {
+            downloader.download_dash(request, Some(output), download_options)
         }
-        _ => downloader.download(&request, Some(&output), &download_options),
+        _ => downloader.download(request, Some(output), download_options),
     }
     .map_err(|error| error.to_string())?;
+    Ok(result)
+}
+
+fn native_download_single_format(
+    options: &cli::CliOptions,
+    info: &InfoDict,
+    format: &serde_json::Value,
+    extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
+    fallback_extractor: Option<&str>,
+    download_options: &DownloadOptions,
+    downloader: &DirectDownloader,
+) -> Result<(), String> {
+    let selected = selected_format_details(format, info)?;
+    let download_url = selected.url;
+    let selected_ext = selected.ext;
+    let mut request =
+        options.request_for_url(&download_url, extraction_context.cookie_jar().clone());
+    native_apply_info_http_headers(&mut request, info)?;
+    if let Some(extra_param) = selected.extra_param_to_segment_url {
+        request.extensions_mut().insert(
+            "extra_param_to_segment_url".to_owned(),
+            serde_json::json!(extra_param),
+        );
+    }
+    let output = direct_output_path(info, options, selected_ext.as_deref())?;
+    let declared_ext = selected_ext
+        .as_deref()
+        .or_else(|| info.get("ext").and_then(serde_json::Value::as_str));
+    let declared_protocol = native_format_protocol(info, format, &download_url);
+    if archive.contains_info(info, fallback_extractor) {
+        if !options.quiet.unwrap_or(false) {
+            eprintln!(
+                "[download] {} is already present in the download archive",
+                archive
+                    .id_for_info(info, fallback_extractor)
+                    .unwrap_or_else(|| "item".to_owned())
+            );
+        }
+        return Ok(());
+    }
+    let result = native_dispatch_download(
+        downloader,
+        &request,
+        &download_url,
+        declared_ext,
+        declared_protocol.as_deref(),
+        &output,
+        download_options,
+    )?;
     let postprocessed =
         if options.extractaudio || options.remuxvideo.is_some() || options.recodevideo.is_some() {
             let mut post_info = info.clone();
@@ -396,10 +578,184 @@ fn native_download_info(
             result.bytes, result.url
         );
     }
-    if let Some(info_path) = info_path {
-        eprintln!("[info] {}", info_path.display());
+    Ok(())
+}
+
+/// Download every `requested_formats` part into `f<id>` files and merge them
+/// with FFmpeg, mirroring the oracle's merged-format download path.
+fn native_download_merged_format(
+    options: &cli::CliOptions,
+    info: &InfoDict,
+    merged: &serde_json::Value,
+    extraction_context: &ExtractionContext,
+    archive: &mut DownloadArchive,
+    fallback_extractor: Option<&str>,
+    download_options: &DownloadOptions,
+    downloader: &DirectDownloader,
+) -> Result<(), String> {
+    let parts = merged
+        .get("requested_formats")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "merged native format has no requested formats".to_owned())?;
+    if parts.is_empty() {
+        return Err("merged native format has no requested formats".to_owned());
+    }
+    let merged_ext = merged.get("ext").and_then(serde_json::Value::as_str);
+    let mut merged_info = info.clone();
+    if let Some(fields) = merged.as_object() {
+        for (key, value) in fields {
+            merged_info.insert(key, value.clone());
+        }
+    }
+    let output = direct_output_path(&merged_info, options, merged_ext)?;
+    if archive.contains_info(&merged_info, fallback_extractor) {
+        if !options.quiet.unwrap_or(false) {
+            eprintln!(
+                "[download] {} is already present in the download archive",
+                archive
+                    .id_for_info(&merged_info, fallback_extractor)
+                    .unwrap_or_else(|| "item".to_owned())
+            );
+        }
+        return Ok(());
+    }
+    let mut part_paths = Vec::new();
+    let mut downloaded_parts = Vec::new();
+    let mut total_bytes = 0_usize;
+    for (position, part) in parts.iter().enumerate() {
+        let part_url = part
+            .get("url")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "merged native part has no URL".to_owned())?;
+        let part_path = merge_part_path(&output, merged_ext, part, position)?;
+        let mut request =
+            options.request_for_url(part_url, extraction_context.cookie_jar().clone());
+        native_apply_info_http_headers(&mut request, &merged_info)?;
+        if let Some(extra_param) = format_extra_param(part)? {
+            request.extensions_mut().insert(
+                "extra_param_to_segment_url".to_owned(),
+                serde_json::json!(extra_param),
+            );
+        }
+        let part_ext = part.get("ext").and_then(serde_json::Value::as_str);
+        let part_protocol = native_format_protocol(info, part, part_url);
+        let result = native_dispatch_download(
+            downloader,
+            &request,
+            part_url,
+            part_ext,
+            part_protocol.as_deref(),
+            &part_path,
+            download_options,
+        )?;
+        let mut final_path = part_path.clone();
+        if let Some(actual) = result.path.as_ref() {
+            if actual != &final_path {
+                std::fs::copy(actual, &final_path).map_err(|error| error.to_string())?;
+                final_path = actual.clone();
+            }
+        }
+        total_bytes += result.bytes;
+        let mut downloaded = part.clone();
+        if let Some(object) = downloaded.as_object_mut() {
+            object.insert(
+                "filepath".to_owned(),
+                serde_json::json!(final_path.to_string_lossy()),
+            );
+        }
+        downloaded_parts.push(downloaded);
+        part_paths.push(final_path);
+    }
+    let mut merge_info = merged_info.clone();
+    merge_info.insert("filepath", serde_json::json!(output.to_string_lossy()));
+    merge_info.insert(
+        "requested_formats",
+        serde_json::Value::Array(downloaded_parts),
+    );
+    merge_info.insert(
+        "__files_to_merge",
+        serde_json::Value::Array(
+            part_paths
+                .iter()
+                .map(|path| serde_json::json!(path.to_string_lossy()))
+                .collect(),
+        ),
+    );
+    let merge_options = native_postprocess_options(options, download_options.simulate);
+    let merge_result = FfmpegMerger
+        .run(&merge_info, &merge_options)
+        .map_err(|error| error.to_string())?;
+    for path in &merge_result.files_to_delete {
+        std::fs::remove_file(path).map_err(|error| error.to_string())?;
+    }
+    let postprocessed =
+        if options.extractaudio || options.remuxvideo.is_some() || options.recodevideo.is_some() {
+            let mut post_info = merge_info.clone();
+            post_info.insert("filepath", serde_json::json!(output.to_string_lossy()));
+            Some(run_native_postprocessor(
+                &post_info,
+                options,
+                merge_result.simulated,
+            )?)
+        } else {
+            None
+        };
+    if !merge_result.simulated && !options.skip_download {
+        archive
+            .record_info(&merged_info, fallback_extractor)
+            .map_err(|error| error.to_string())?;
+    }
+    if options.dumpjson || options.dump_single_json {
+        let mut output_json = serde_json::json!({
+            "url": parts
+                .iter()
+                .filter_map(|part| part.get("url").and_then(serde_json::Value::as_str))
+                .collect::<Vec<_>>()
+                .join("\n"),
+            "bytes": total_bytes,
+            "path": output.to_string_lossy(),
+            "simulated": merge_result.simulated,
+        });
+        if let Some(postprocessed) = postprocessed {
+            output_json["postprocess"] = postprocess_result_json(&postprocessed);
+        }
+        println!(
+            "{}",
+            serde_json::to_string(&output_json).map_err(|error| error.to_string())?
+        );
+    } else if merge_result.simulated {
+        println!(
+            "[download] simulated {} bytes from {}",
+            total_bytes,
+            output.display()
+        );
+    } else {
+        println!("[download] {} bytes -> {}", total_bytes, output.display());
     }
     Ok(())
+}
+
+/// Name one merge part `f<format_id>` file next to the merged output, like
+/// `prepend_extension(correct_ext(temp, ext), 'f<id>', ext)`.
+fn merge_part_path(
+    output: &std::path::Path,
+    merged_ext: Option<&str>,
+    part: &serde_json::Value,
+    position: usize,
+) -> Result<PathBuf, String> {
+    let merged_ext =
+        merged_ext.ok_or_else(|| "merged native format has no extension".to_owned())?;
+    let name = output.to_string_lossy();
+    let stem = match name.rsplit_once('.') {
+        Some((stem, ext)) if ext == merged_ext => stem.to_owned(),
+        _ => name.into_owned(),
+    };
+    let part_id = part
+        .get("format_id")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned)
+        .unwrap_or_else(|| position.to_string());
+    Ok(PathBuf::from(format!("{stem}.f{part_id}.{merged_ext}")))
 }
 
 fn native_apply_info_http_headers(request: &mut Request, info: &InfoDict) -> Result<(), String> {

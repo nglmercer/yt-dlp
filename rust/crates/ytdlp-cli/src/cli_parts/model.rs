@@ -15,6 +15,7 @@ pub struct CliOptions {
     pub simulate: Option<bool>,
     pub skip_download: bool,
     pub format: Option<String>,
+    pub allow_unplayable_formats: bool,
     pub format_sort: Vec<String>,
     pub extractaudio: bool,
     pub audioformat: Option<String>,
@@ -52,6 +53,7 @@ pub struct CliOptions {
     pub config_locations: Option<Vec<String>>,
     pub download_archive: Option<String>,
     pub cookiefile: Option<String>,
+    pub extractor_args: ExtractorArgs,
 }
 
 /// Option spellings understood by the typed Rust parser. The generated source manifest is
@@ -80,6 +82,7 @@ pub fn rust_supported_option_aliases() -> &'static [&'static str] {
         "--user-agent",
         "--referer",
         "--add-headers",
+        "--extractor-args",
         "--quiet",
         "--no-quiet",
         "--verbose",
@@ -90,6 +93,8 @@ pub fn rust_supported_option_aliases() -> &'static [&'static str] {
         "--no-download",
         "--format",
         "--all-formats",
+        "--allow-unplayable-formats",
+        "--no-allow-unplayable-formats",
         "--format-sort",
         "--format-sort-reset",
         "--extract-audio",
@@ -212,6 +217,7 @@ impl Default for CliOptions {
             simulate: None,
             skip_download: false,
             format: None,
+            allow_unplayable_formats: false,
             format_sort: Vec::new(),
             extractaudio: false,
             audioformat: Some("best".to_owned()),
@@ -249,6 +255,7 @@ impl Default for CliOptions {
             config_locations: None,
             download_archive: None,
             cookiefile: None,
+            extractor_args: ExtractorArgs::new(),
         }
     }
 }
